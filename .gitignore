@@ -1,0 +1,11 @@
+# dependencies
+node_modules
+/dist
+
+# environment
+.env
+
+# IDE / OS
+.DS_Store
+*.log
+node_modules

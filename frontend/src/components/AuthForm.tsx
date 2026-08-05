@@ -88,7 +88,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             ⚡
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight">
-            SYNAPSE HQ
+            NEXUS HQ
           </h1>
           <p className="text-xs text-slate-400">
             {mode === 'login'

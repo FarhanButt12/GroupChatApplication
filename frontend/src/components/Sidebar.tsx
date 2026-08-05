@@ -98,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div>
               <h1 className="font-extrabold text-base text-white tracking-tight leading-none flex items-center gap-1.5">
-                SYNAPSE <span className="text-[10px] text-blue-400 font-bold bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">HQ</span>
+                NEXUS <span className="text-[10px] text-cyan-400 font-extrabold bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">HQ</span>
               </h1>
               <p className="text-[11px] text-slate-400 font-medium">Enterprise Communications</p>
             </div>

@@ -80,28 +80,28 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   };
 
   return (
-    <div className="min-h-screen chat-bg flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Subtle Background Radial Glows */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="min-h-screen glass-main flex items-center justify-center p-4 relative overflow-hidden select-none">
+      {/* Dynamic Floating Ambient Background Glows */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none animate-ambient"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none animate-ambient" style={{ animationDelay: '4s' }}></div>
 
-      <div className="w-full max-w-md card-glass p-8 rounded-3xl shadow-2xl space-y-6 border border-slate-800/90 relative z-10">
-        {/* Brand Header */}
+      <div className="w-full max-w-md glass-card p-8 rounded-3xl space-y-6 relative z-10 border border-slate-800/90 shadow-2xl">
+        {/* Brand Logo & Title */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-bold text-white text-2xl mx-auto shadow-lg shadow-indigo-600/30">
-            💬
+          <div className="w-14 h-14 rounded-2xl gradient-btn flex items-center justify-center font-black text-white text-2xl mx-auto shadow-xl">
+            ⚡
           </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            GroupChat Application
+          <h1 className="text-2xl font-black text-white tracking-tight">
+            GroupChat Platform
           </h1>
           <p className="text-xs text-slate-400">
             {mode === 'login'
-              ? 'Sign in to access your team chat workspace'
-              : 'Create a new user account to join groups'}
+              ? 'Welcome back! Enter your credentials to sign in.'
+              : 'Create a new user account to join chat channels.'}
           </p>
         </div>
 
-        {/* Tab Switcher */}
+        {/* Auth Mode Tabs */}
         <div className="flex bg-slate-950/90 p-1.5 rounded-2xl border border-slate-800/80">
           <button
             type="button"
@@ -109,9 +109,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               setMode('login');
               setError(null);
             }}
-            className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 ${
+            className={`flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all duration-200 ${
               mode === 'login'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                ? 'gradient-btn text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -123,9 +123,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               setMode('register');
               setError(null);
             }}
-            className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 ${
+            className={`flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all duration-200 ${
               mode === 'register'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                ? 'gradient-btn text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -133,19 +133,19 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           </button>
         </div>
 
-        {/* Error Notification */}
+        {/* Error Alert */}
         {error && (
-          <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-xs text-center flex items-center justify-center gap-2">
+          <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-400 text-xs text-center flex items-center justify-center gap-2">
             <span>⚠️</span>
             <span>{error}</span>
           </div>
         )}
 
-        {/* Form Inputs */}
+        {/* Input Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'register' && (
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">
                 Username
               </label>
               <input
@@ -155,13 +155,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 required
                 minLength={3}
                 placeholder="e.g. john_doe"
-                className="w-full px-4 py-3 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                className="w-full px-4 py-3 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-slate-300 mb-1.5">
               Email Address
             </label>
             <input
@@ -170,12 +170,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="e.g. alice@example.com"
-              className="w-full px-4 py-3 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+              className="w-full px-4 py-3 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-slate-300 mb-1.5">
               Password
             </label>
             <input
@@ -184,23 +184,23 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              placeholder="Enter password"
-              className="w-full px-4 py-3 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+              placeholder="Enter your password"
+              className="w-full px-4 py-3 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading || !email || !password || (mode === 'register' && !username)}
-            className="w-full py-3.5 btn-primary text-white font-bold rounded-xl text-xs disabled:opacity-40 transition-all shadow-lg shadow-indigo-600/30 mt-2 flex justify-center items-center gap-2"
+            className="w-full py-3.5 gradient-btn text-white font-black rounded-xl text-xs disabled:opacity-40 transition-all shadow-xl mt-2 flex justify-center items-center gap-2"
           >
             {loading ? (
               <>
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Authenticating...
               </>
             ) : mode === 'login' ? (
-              'Sign In →'
+              'Sign In Workspace →'
             ) : (
               'Register Account →'
             )}

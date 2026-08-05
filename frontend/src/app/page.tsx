@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthForm } from '../components/AuthForm';
 import { Sidebar, Group } from '../components/Sidebar';
 import { ChatRoom } from '../components/ChatRoom';
@@ -16,11 +16,21 @@ export default function HomePage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [currentTheme, setCurrentTheme] = useState<string>('default');
+
+  const handleThemeChange = (theme: string) => {
+    setCurrentTheme(theme);
+    if (theme === 'default') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  };
 
   const handleAuthSuccess = (authToken: string, user: User) => {
     setToken(authToken);
     setCurrentUser(user);
-    // Explicitly set selectedGroup to null on login so it does NOT auto-open any group!
+    // Explicitly set selectedGroup to null on login per requirements so it does NOT auto-open any group!
     setSelectedGroup(null);
   };
 
@@ -31,7 +41,7 @@ export default function HomePage() {
   };
 
   const handleGroupJoined = () => {
-    // Trigger sidebar re-fetch to update lock icons dynamically
+    // Trigger sidebar re-fetch to update lock icons dynamically from 🔒 to 🔓
     setRefreshKey((prev) => prev + 1);
   };
 
@@ -41,7 +51,7 @@ export default function HomePage() {
 
   return (
     <main className="h-screen w-screen flex overflow-hidden bg-slate-950 font-sans">
-      {/* Left Sidebar with key to refresh lock status when joining */}
+      {/* Left Sidebar */}
       <Sidebar
         key={refreshKey}
         token={token}
@@ -49,9 +59,11 @@ export default function HomePage() {
         selectedGroup={selectedGroup}
         onSelectGroup={(group) => setSelectedGroup(group)}
         onLogout={handleLogout}
+        currentTheme={currentTheme}
+        onThemeChange={handleThemeChange}
       />
 
-      {/* Right Main Chat Area */}
+      {/* Right Main Chat Window Area */}
       <section className="flex-1 flex flex-col h-full overflow-hidden">
         {selectedGroup ? (
           <ChatRoom
@@ -66,14 +78,19 @@ export default function HomePage() {
             onLogout={handleLogout}
           />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center chat-bg text-slate-500 space-y-3 select-none">
-            <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-3xl shadow-xl">
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center glass-main text-slate-500 space-y-4 select-none relative overflow-hidden">
+            {/* Ambient background glow */}
+            <div className="absolute w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+
+            <div className="w-20 h-20 rounded-3xl bg-slate-900/90 border border-slate-800 flex items-center justify-center text-4xl shadow-2xl z-10">
               👈
             </div>
-            <h2 className="text-sm font-bold text-white">No Channel Selected</h2>
-            <p className="text-xs text-slate-400 max-w-xs">
-              Select a channel from the left sidebar to view messages or join the conversation.
-            </p>
+            <div className="z-10 max-w-sm space-y-1">
+              <h2 className="text-base font-extrabold text-white">No Channel Selected</h2>
+              <p className="text-xs text-slate-400">
+                Select a channel from the left sidebar to start chatting or join a new group conversation.
+              </p>
+            </div>
           </div>
         )}
       </section>

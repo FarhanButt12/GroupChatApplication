@@ -29,7 +29,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [msgFilter, setMsgFilter] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const quickEmojis = ['👍', '❤️', '🔥', '🚀', '😂', '🎉', '💯', '🙏'];
 
   const { messages, loading, isMember, error, joinGroup, refetch } = useMessagePolling({
     groupId,
@@ -84,85 +88,117 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
     }
   };
 
+  const appendEmoji = (emoji: string) => {
+    setNewMessage((prev) => prev + emoji);
+  };
+
   const getInitials = (name: string) => {
     return (name || 'U').substring(0, 2).toUpperCase();
   };
 
+  const filteredMessages = messages.filter((msg) =>
+    msg.content.toLowerCase().includes(msgFilter.toLowerCase()),
+  );
+
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col justify-center items-center gap-3 chat-bg text-slate-500">
-        <div className="w-8 h-8 border-3 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
-        <p className="text-xs font-medium">Connecting to #{groupName}...</p>
+      <div className="flex-1 flex flex-col justify-center items-center gap-4 glass-main text-slate-400 select-none">
+        <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+        <p className="text-xs font-bold tracking-wide">Connecting to #{groupName}...</p>
       </div>
     );
   }
 
-  // Non-member Locked State View
+  // Non-member Locked State Screen
   if (!isMember) {
     return (
-      <div className="flex-1 flex flex-col justify-center items-center p-8 text-center chat-bg relative select-none">
-        <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-3xl shadow-xl mb-4">
-          🔒
-        </div>
+      <div className="flex-1 flex flex-col justify-center items-center p-8 text-center glass-main relative select-none overflow-hidden">
+        {/* Glow ambient circle */}
+        <div className="absolute w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
 
-        <div className="max-w-sm space-y-2 mb-6">
-          <h2 className="text-xl font-bold text-white tracking-tight">
-            #{groupName}
-          </h2>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            You are not a member of this channel. Join to view message history and start chatting.
-          </p>
-          {groupDescription && (
-            <p className="text-[11px] text-indigo-400 bg-indigo-500/10 py-2 px-3 rounded-lg border border-indigo-500/20 italic">
-              "{groupDescription}"
-            </p>
-          )}
-        </div>
-
-        {error && (
-          <div className="mb-4 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
-            {error}
+        <div className="relative z-10 max-w-md space-y-6">
+          <div className="w-20 h-20 rounded-3xl bg-slate-900/90 border border-slate-800 flex items-center justify-center text-4xl shadow-2xl mx-auto">
+            🔒
           </div>
-        )}
 
-        <button
-          onClick={handleJoinGroup}
-          className="px-6 py-2.5 btn-primary text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30 flex items-center gap-2"
-        >
-          <span>Join Channel</span>
-        </button>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">
+              <span>#{groupName}</span>
+              <span className="text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-0.5 rounded-full">
+                Locked Channel
+              </span>
+            </h2>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              You are currently not a member of this channel. Join to unlock message history and participate in conversations.
+            </p>
+            {groupDescription && (
+              <p className="text-xs text-indigo-400 bg-indigo-500/10 py-2.5 px-4 rounded-xl border border-indigo-500/20 italic mt-2">
+                "{groupDescription}"
+              </p>
+            )}
+          </div>
+
+          {error && (
+            <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs">
+              ⚠️ {error}
+            </div>
+          )}
+
+          <button
+            onClick={handleJoinGroup}
+            className="w-full py-3.5 gradient-btn text-white font-extrabold text-xs rounded-xl shadow-xl flex items-center justify-center gap-2"
+          >
+            <span>➕ Join Channel</span>
+          </button>
+        </div>
       </div>
     );
   }
 
-  // Active Member Chat Stream
+  // Active Member Live Chat Stream
   return (
-    <div className="flex-1 flex flex-col h-full chat-bg overflow-hidden">
-      {/* Top Header Bar */}
-      <header className="px-6 py-3.5 border-b border-slate-800/80 bg-slate-900/40 flex justify-between items-center shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-extrabold text-indigo-400">#</span>
+    <div className="flex-1 flex flex-col h-full glass-main overflow-hidden">
+      {/* Channel Header Navigation Bar */}
+      <header className="px-6 py-3.5 border-b border-slate-800/80 bg-slate-950/60 flex justify-between items-center shrink-0 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-extrabold text-indigo-400 text-lg">
+            #
+          </div>
           <div>
-            <h2 className="font-bold text-white text-sm tracking-tight flex items-center gap-1.5">
+            <h2 className="font-extrabold text-white text-sm tracking-tight flex items-center gap-2">
               <span>{groupName}</span>
               <span className="text-xs" title="Joined Channel">🔓</span>
             </h2>
             {groupDescription && (
-              <p className="text-[11px] text-slate-400 truncate max-w-md">{groupDescription}</p>
+              <p className="text-[11px] text-slate-400 truncate max-w-xs sm:max-w-md">{groupDescription}</p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-medium">
+        <div className="flex items-center gap-2.5">
+          {/* Toggle Search Filter inside Chat */}
+          <button
+            onClick={() => setShowSearch(!showSearch)}
+            className={`p-2 rounded-xl text-xs transition-all border ${
+              showSearch
+                ? 'bg-indigo-600 text-white border-indigo-500'
+                : 'bg-slate-900/80 text-slate-400 hover:text-white border-slate-800'
+            }`}
+            title="Search Messages"
+          >
+            🔍
+          </button>
+
+          {/* Live Sync Badge */}
+          <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            Live
+            10s Sync
           </span>
 
           <button
             onClick={() => refetch()}
-            title="Sync Messages"
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all text-xs"
+            title="Sync Messages Now"
+            className="p-2 text-slate-400 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800 rounded-xl transition-all text-xs"
           >
             🔄
           </button>
@@ -170,7 +206,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
           {onLogout && (
             <button
               onClick={onLogout}
-              className="px-3 py-1.5 bg-slate-900 hover:bg-red-500/20 text-slate-300 hover:text-red-400 border border-slate-800 hover:border-red-500/30 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5"
+              className="px-3 py-1.5 bg-slate-900/90 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-slate-800 hover:border-rose-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
             >
               <span>🚪</span>
               <span className="hidden sm:inline">Sign Out</span>
@@ -179,22 +215,49 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         </div>
       </header>
 
-      {/* Error alert */}
-      {error && (
-        <div className="p-2.5 bg-red-500/10 border-b border-red-500/20 text-red-400 text-xs text-center">
-          {error}
+      {/* Optional Search Filter Bar */}
+      {showSearch && (
+        <div className="px-6 py-2 bg-slate-950/90 border-b border-slate-800/80 flex items-center gap-2">
+          <span className="text-slate-500 text-xs">🔍</span>
+          <input
+            type="text"
+            value={msgFilter}
+            onChange={(e) => setMsgFilter(e.target.value)}
+            placeholder="Filter messages in this channel..."
+            className="flex-1 bg-transparent border-none text-xs text-white placeholder-slate-500 focus:outline-none"
+          />
+          {msgFilter && (
+            <button
+              onClick={() => setMsgFilter('')}
+              className="text-xs text-slate-500 hover:text-white"
+            >
+              ✕ Clear
+            </button>
+          )}
         </div>
       )}
 
-      {/* Messages Feed */}
+      {/* Error alert */}
+      {error && (
+        <div className="p-2.5 bg-rose-500/10 border-b border-rose-500/20 text-rose-400 text-xs text-center">
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* Chat Messages Feed Stream */}
       <div className="flex-1 p-6 overflow-y-auto space-y-4">
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-2">
-            <div className="text-3xl">💬</div>
-            <p className="text-xs font-medium">No messages in #{groupName} yet.</p>
+        {filteredMessages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-2 select-none">
+            <div className="w-14 h-14 rounded-3xl bg-slate-900/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner">
+              💬
+            </div>
+            <p className="text-xs font-bold text-slate-400">
+              {msgFilter ? 'No matching messages found' : `No messages in #${groupName} yet.`}
+            </p>
+            <p className="text-[11px] text-slate-600">Be the first to start the conversation!</p>
           </div>
         ) : (
-          messages.map((msg) => {
+          filteredMessages.map((msg) => {
             const isMine = msg.senderId === currentUserId;
             const displaySender = isMine
               ? currentUsername
@@ -207,21 +270,21 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
               >
                 {/* User Avatar */}
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                  className={`w-8 h-8 rounded-2xl flex items-center justify-center text-[10px] font-black shrink-0 shadow-md ${
                     isMine
-                      ? 'bg-indigo-600 text-white shadow-sm'
+                      ? 'gradient-btn text-white'
                       : 'bg-slate-800 text-slate-300 border border-slate-700'
                   }`}
                 >
                   {getInitials(displaySender)}
                 </div>
 
-                <div className={`flex flex-col max-w-[70%] ${isMine ? 'items-end' : 'items-start'}`}>
+                <div className={`flex flex-col max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-semibold text-slate-400">
+                    <span className="text-[11px] font-bold text-slate-400">
                       {displaySender}
                     </span>
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-[10px] text-slate-600">
                       {new Date(msg.createdAt).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -230,10 +293,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                   </div>
 
                   <div
-                    className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-sm break-words ${
+                    className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-md break-words ${
                       isMine
-                        ? 'bg-indigo-600 text-white rounded-tr-none'
-                        : 'bg-slate-800 text-slate-200 border border-slate-700/70 rounded-tl-none'
+                        ? 'gradient-btn text-white rounded-tr-none'
+                        : 'bg-slate-900/90 text-slate-200 border border-slate-800 rounded-tl-none'
                     }`}
                   >
                     {msg.content}
@@ -246,8 +309,24 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input Bar */}
-      <footer className="p-4 border-t border-slate-800/80 bg-slate-900/30 shrink-0">
+      {/* Message Input Footer with Quick Emoji Bar */}
+      <footer className="p-4 border-t border-slate-800/80 bg-slate-950/80 shrink-0 backdrop-blur-md space-y-2">
+        {/* Quick Emojis Selector Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pr-1">Quick:</span>
+          {quickEmojis.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => appendEmoji(emoji)}
+              className="p-1 px-2 text-xs bg-slate-900/80 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800/80 transition-all hover:scale-110"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+
+        {/* Input Form */}
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"
@@ -255,18 +334,22 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={`Message #${groupName}...`}
             disabled={sending}
-            className="flex-1 px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+            className="flex-1 px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all shadow-inner"
           />
           <button
             type="submit"
             disabled={sending || !newMessage.trim()}
-            className="px-5 py-2.5 btn-primary text-white font-bold text-xs rounded-xl disabled:opacity-40 transition-all flex items-center gap-1.5"
+            className="px-6 py-3 gradient-btn text-white font-extrabold text-xs rounded-xl disabled:opacity-40 transition-all shadow-lg flex items-center gap-1.5 shrink-0"
           >
-            {sending ? 'Sending...' : 'Send'}
+            {sending ? (
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>Send 🚀</>
+            )}
           </button>
         </form>
         {sendError && (
-          <div className="mt-2 text-red-400 text-[11px] text-center">{sendError}</div>
+          <div className="mt-1.5 text-rose-400 text-[11px] text-center">{sendError}</div>
         )}
       </footer>
     </div>

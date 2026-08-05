@@ -81,28 +81,24 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
   return (
     <div className="min-h-screen glass-main flex items-center justify-center p-4 relative overflow-hidden select-none">
-      {/* Dynamic Floating Ambient Background Glows */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none animate-ambient"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none animate-ambient" style={{ animationDelay: '4s' }}></div>
-
-      <div className="w-full max-w-md glass-card p-8 rounded-3xl space-y-6 relative z-10 border border-slate-800/90 shadow-2xl">
-        {/* Brand Logo & Title */}
+      <div className="w-full max-w-md glass-card p-8 rounded-3xl space-y-6 relative z-10 border border-slate-800 shadow-2xl">
+        {/* Brand Logo */}
         <div className="text-center space-y-2">
           <div className="w-14 h-14 rounded-2xl gradient-btn flex items-center justify-center font-black text-white text-2xl mx-auto shadow-xl">
             ⚡
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight">
-            GroupChat Platform
+            SYNAPSE HQ
           </h1>
           <p className="text-xs text-slate-400">
             {mode === 'login'
-              ? 'Welcome back! Enter your credentials to sign in.'
-              : 'Create a new user account to join chat channels.'}
+              ? 'Enter your account credentials to access your workspace.'
+              : 'Create a new user profile to join workspace channels.'}
           </p>
         </div>
 
-        {/* Auth Mode Tabs */}
-        <div className="flex bg-slate-950/90 p-1.5 rounded-2xl border border-slate-800/80">
+        {/* Tab Switcher */}
+        <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
           <button
             type="button"
             onClick={() => {
@@ -155,7 +151,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 required
                 minLength={3}
                 placeholder="e.g. john_doe"
-                className="w-full px-4 py-3 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
+                className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
               />
             </div>
           )}
@@ -170,7 +166,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="e.g. alice@example.com"
-              className="w-full px-4 py-3 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
+              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
             />
           </div>
 
@@ -185,7 +181,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               required
               minLength={6}
               placeholder="Enter your password"
-              className="w-full px-4 py-3 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-inner"
+              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
             />
           </div>
 

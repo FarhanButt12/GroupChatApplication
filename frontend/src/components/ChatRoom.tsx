@@ -11,7 +11,7 @@ interface ChatRoomProps {
   currentUserId: string;
   currentUsername: string;
   onJoined?: () => void;
-  onLogout?: () => void;
+  onRequestLogout?: () => void;
   apiUrl?: string;
 }
 
@@ -23,7 +23,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
   currentUserId,
   currentUsername,
   onJoined,
-  onLogout,
+  onRequestLogout,
   apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
 }) => {
   const [newMessage, setNewMessage] = useState('');
@@ -103,7 +103,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
   if (loading) {
     return (
       <div className="flex-1 flex flex-col justify-center items-center gap-4 glass-main text-slate-400 select-none">
-        <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
         <p className="text-xs font-bold tracking-wide">Connecting to #{groupName}...</p>
       </div>
     );
@@ -113,18 +113,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
   if (!isMember) {
     return (
       <div className="flex-1 flex flex-col justify-center items-center p-8 text-center glass-main relative select-none overflow-hidden">
-        {/* Glow ambient circle */}
-        <div className="absolute w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-
         <div className="relative z-10 max-w-md space-y-6">
-          <div className="w-20 h-20 rounded-3xl bg-slate-900/90 border border-slate-800 flex items-center justify-center text-4xl shadow-2xl mx-auto">
+          <div className="w-20 h-20 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center text-4xl shadow-2xl mx-auto">
             🔒
           </div>
 
           <div className="space-y-2">
             <h2 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">
               <span>#{groupName}</span>
-              <span className="text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-0.5 rounded-full">
+              <span className="text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
                 Locked Channel
               </span>
             </h2>
@@ -132,7 +129,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
               You are currently not a member of this channel. Join to unlock message history and participate in conversations.
             </p>
             {groupDescription && (
-              <p className="text-xs text-indigo-400 bg-indigo-500/10 py-2.5 px-4 rounded-xl border border-indigo-500/20 italic mt-2">
+              <p className="text-xs text-blue-400 bg-blue-500/10 py-2.5 px-4 rounded-xl border border-blue-500/20 italic mt-2">
                 "{groupDescription}"
               </p>
             )}
@@ -159,9 +156,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full glass-main overflow-hidden">
       {/* Channel Header Navigation Bar */}
-      <header className="px-6 py-3.5 border-b border-slate-800/80 bg-slate-950/60 flex justify-between items-center shrink-0 backdrop-blur-md">
+      <header className="px-6 py-3.5 border-b border-slate-800/80 bg-slate-950/70 flex justify-between items-center shrink-0 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-extrabold text-indigo-400 text-lg">
+          <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-extrabold text-blue-400 text-lg">
             #
           </div>
           <div>
@@ -176,20 +173,18 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         </div>
 
         <div className="flex items-center gap-2.5">
-          {/* Toggle Search Filter inside Chat */}
           <button
             onClick={() => setShowSearch(!showSearch)}
             className={`p-2 rounded-xl text-xs transition-all border ${
               showSearch
-                ? 'bg-indigo-600 text-white border-indigo-500'
-                : 'bg-slate-900/80 text-slate-400 hover:text-white border-slate-800'
+                ? 'bg-blue-600 text-white border-blue-500'
+                : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800'
             }`}
             title="Search Messages"
           >
             🔍
           </button>
 
-          {/* Live Sync Badge */}
           <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
             10s Sync
@@ -197,16 +192,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
 
           <button
             onClick={() => refetch()}
-            title="Sync Messages Now"
-            className="p-2 text-slate-400 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800 rounded-xl transition-all text-xs"
+            title="Sync Messages"
+            className="p-2 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl transition-all text-xs"
           >
             🔄
           </button>
 
-          {onLogout && (
+          {onRequestLogout && (
             <button
-              onClick={onLogout}
-              className="px-3 py-1.5 bg-slate-900/90 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-slate-800 hover:border-rose-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+              onClick={onRequestLogout}
+              className="px-3 py-1.5 bg-slate-900 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-slate-800 hover:border-rose-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
             >
               <span>🚪</span>
               <span className="hidden sm:inline">Sign Out</span>
@@ -215,7 +210,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         </div>
       </header>
 
-      {/* Optional Search Filter Bar */}
+      {/* Filter Bar */}
       {showSearch && (
         <div className="px-6 py-2 bg-slate-950/90 border-b border-slate-800/80 flex items-center gap-2">
           <span className="text-slate-500 text-xs">🔍</span>
@@ -244,17 +239,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         </div>
       )}
 
-      {/* Chat Messages Feed Stream */}
+      {/* Messages Feed */}
       <div className="flex-1 p-6 overflow-y-auto space-y-4">
         {filteredMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-2 select-none">
-            <div className="w-14 h-14 rounded-3xl bg-slate-900/80 border border-slate-800 flex items-center justify-center text-2xl shadow-inner">
+            <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-2xl shadow-inner">
               💬
             </div>
             <p className="text-xs font-bold text-slate-400">
               {msgFilter ? 'No matching messages found' : `No messages in #${groupName} yet.`}
             </p>
-            <p className="text-[11px] text-slate-600">Be the first to start the conversation!</p>
           </div>
         ) : (
           filteredMessages.map((msg) => {
@@ -270,7 +264,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
               >
                 {/* User Avatar */}
                 <div
-                  className={`w-8 h-8 rounded-2xl flex items-center justify-center text-[10px] font-black shrink-0 shadow-md ${
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black shrink-0 shadow-md ${
                     isMine
                       ? 'gradient-btn text-white'
                       : 'bg-slate-800 text-slate-300 border border-slate-700'
@@ -296,7 +290,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                     className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-md break-words ${
                       isMine
                         ? 'gradient-btn text-white rounded-tr-none'
-                        : 'bg-slate-900/90 text-slate-200 border border-slate-800 rounded-tl-none'
+                        : 'bg-slate-900 text-slate-200 border border-slate-800 rounded-tl-none'
                     }`}
                   >
                     {msg.content}
@@ -309,9 +303,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input Footer with Quick Emoji Bar */}
-      <footer className="p-4 border-t border-slate-800/80 bg-slate-950/80 shrink-0 backdrop-blur-md space-y-2">
-        {/* Quick Emojis Selector Bar */}
+      {/* Message Input Footer */}
+      <footer className="p-4 border-t border-slate-800/80 bg-slate-950/90 shrink-0 space-y-2">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pr-1">Quick:</span>
           {quickEmojis.map((emoji) => (
@@ -319,14 +312,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
               key={emoji}
               type="button"
               onClick={() => appendEmoji(emoji)}
-              className="p-1 px-2 text-xs bg-slate-900/80 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800/80 transition-all hover:scale-110"
+              className="p-1 px-2 text-xs bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800 transition-all hover:scale-110"
             >
               {emoji}
             </button>
           ))}
         </div>
 
-        {/* Input Form */}
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"
@@ -334,7 +326,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={`Message #${groupName}...`}
             disabled={sending}
-            className="flex-1 px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all shadow-inner"
+            className="flex-1 px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
           />
           <button
             type="submit"

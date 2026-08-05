@@ -40,6 +40,12 @@ export class GroupsService {
   async getAllGroups() {
     const groups = await this.prisma.group.findMany({
       include: {
+        members: {
+          select: {
+            userId: true,
+            role: true,
+          },
+        },
         _count: {
           select: {
             members: true,

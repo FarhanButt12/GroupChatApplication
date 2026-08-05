@@ -4,21 +4,30 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Create Nest application
   const app = await NestFactory.create(AppModule);
 
-  // Enable global validation pipe for DTO validation
+  // Enable CORS
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
+
+  // Global Validation
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // strip properties that do not have any decorators
-      forbidNonWhitelisted: true, // throw error if non-whitelisted values are provided
-      transform: true, // automatically transform payloads to DTO instances
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
-  // Configure Swagger Documentation
+  // Swagger
   const config = new DocumentBuilder()
     .setTitle('Group Chat REST API')
-    .setDescription('Production-ready Phase 1 Group Chat Application REST API Documentation')
+    .setDescription(
+      'Production-ready Phase 1 Group Chat Application REST API Documentation',
+    )
     .setVersion('1.0')
     .addBearerAuth(
       {
@@ -37,9 +46,11 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   const port = process.env.PORT || 3000;
+
   await app.listen(port);
+
   console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger UI OpenAPI Documentation: http://localhost:${port}/api`);
+  console.log(`📚 Swagger UI: http://localhost:${port}/api`);
 }
 
 bootstrap();

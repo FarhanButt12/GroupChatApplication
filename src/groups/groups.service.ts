@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { USER_SELECT } from '../common/constants/user-select.constant';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 
@@ -27,11 +28,7 @@ export class GroupsService {
         members: {
           include: {
             user: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-              },
+              select: USER_SELECT,
             },
           },
         },
@@ -71,11 +68,7 @@ export class GroupsService {
         members: {
           include: {
             user: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-              },
+              select: USER_SELECT,
             },
           },
           orderBy: {
@@ -133,11 +126,7 @@ export class GroupsService {
       include: {
         group: true,
         user: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-          },
+          select: USER_SELECT,
         },
       },
     });

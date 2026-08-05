@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { USER_SELECT } from '../common/constants/user-select.constant';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetMessagesQueryDto } from './dto/get-messages-query.dto';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -31,7 +32,9 @@ export class MessagesService {
     });
 
     if (!membership) {
-      throw new ForbiddenException('Access denied. You must join this group to send or view messages.');
+      throw new ForbiddenException(
+        'Access denied. You must join this group to send or view messages.',
+      );
     }
 
     return { group, membership };
@@ -50,11 +53,7 @@ export class MessagesService {
       },
       include: {
         sender: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-          },
+          select: USER_SELECT,
         },
       },
     });
@@ -65,7 +64,11 @@ export class MessagesService {
     };
   }
 
-  async getGroupMessages(userId: string, groupId: string, query: GetMessagesQueryDto) {
+  async getGroupMessages(
+    userId: string,
+    groupId: string,
+    query: GetMessagesQueryDto,
+  ) {
     // 1. Authorization check: user must be a group member
     await this.checkMembership(userId, groupId);
 
@@ -82,11 +85,7 @@ export class MessagesService {
         take: limit,
         include: {
           sender: {
-            select: {
-              id: true,
-              username: true,
-              email: true,
-            },
+            select: USER_SELECT,
           },
         },
       }),

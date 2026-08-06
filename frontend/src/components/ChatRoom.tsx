@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useMessagePolling } from '../hooks/useMessagePolling';
+import { useMessageSocket } from '../hooks/useMessageSocket';
 
 interface ChatRoomProps {
   groupId: string;
@@ -35,10 +35,18 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
 
   const quickEmojis = ['👍', '❤️', '🔥', '🚀', '😂', '🎉', '💯', '🙏'];
 
-  const { messages, loading, isMember, error, joinGroup, refetch } = useMessagePolling({
+  // Real-time WebSocket hook replacing polling
+  const {
+    messages,
+    loading,
+    isMember,
+    error,
+    isConnected,
+    joinGroup,
+    refetch,
+  } = useMessageSocket({
     groupId,
     token,
-    intervalMs: 10000,
     apiUrl,
   });
 
@@ -80,7 +88,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
       }
 
       setNewMessage('');
-      await refetch();
     } catch (err: any) {
       setSendError(err.message || 'Error sending message');
     } finally {
@@ -185,14 +192,24 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             🔍
           </button>
 
-          <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            10s Sync
+          <span
+            className={`flex items-center gap-1.5 text-[11px] px-3 py-1 rounded-full font-bold border transition-all ${
+              isConnected
+                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+              }`}
+            ></span>
+            {isConnected ? '⚡ Live WebSocket' : 'Connecting...'}
           </span>
 
           <button
             onClick={() => refetch()}
-            title="Sync Messages"
+            title="Reload Messages"
             className="p-2 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl transition-all text-xs"
           >
             🔄

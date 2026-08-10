@@ -14,8 +14,9 @@ async function main() {
 
   const passwordHash = await bcrypt.hash('password123', 10);
 
-  // 1. Create 10 Users
+  // 1. Create Users & System AI Bot
   const userNames = [
+    'system_bot',
     'alice',
     'bob',
     'charlie',
@@ -33,14 +34,15 @@ async function main() {
   for (const username of userNames) {
     users[username] = await prisma.user.create({
       data: {
-        email: `${username}@example.com`,
-        username,
+        email: username === 'system_bot' ? 'system.bot@nexus.hq' : `${username}@example.com`,
+        username: username === 'system_bot' ? 'Nexus AI Bot' : username,
         password: passwordHash,
       },
     });
   }
 
-  console.log('✅ Created 10 Users: Alice, Bob, Charlie, Diana, Eve, Frank, Grace, Hank, Ivy, Jack');
+  console.log('✅ Created System AI Bot & 10 Users: Alice, Bob, Charlie, Diana, Eve, Frank, Grace, Hank, Ivy, Jack');
+
 
   // 2. Create Group 1: Tech Talk (Alice is ADMIN)
   const techGroup = await prisma.group.create({

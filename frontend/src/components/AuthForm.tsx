@@ -24,9 +24,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
-  const [googleEmail, setGoogleEmail] = useState('');
-  const [googleName, setGoogleName] = useState('');
+  const [showGoogleAccountPicker, setShowGoogleAccountPicker] = useState(false);
+  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
+  const [customGoogleName, setCustomGoogleName] = useState('');
+  const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false);
+
+  // Pre-configured Google Accounts for 1-click selection
+  const mockGoogleAccounts = [
+    { name: 'Farhan Butt', email: 'farhan.butt@gmail.com', avatar: 'FB', bg: 'bg-red-500' },
+    { name: 'Muhammad Farhan', email: 'farhan.dev@gmail.com', avatar: 'MF', bg: 'bg-blue-600' },
+    { name: 'Demo Workspace User', email: 'demo.workspace@gmail.com', avatar: 'DW', bg: 'bg-emerald-600' },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,10 +91,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
     }
   };
 
-  const handleGoogleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!googleEmail || !googleName) return;
-
+  const handleSelectGoogleAccount = async (selectedEmail: string, selectedName: string) => {
     setLoading(true);
     setError(null);
 
@@ -95,8 +100,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: googleEmail.trim().toLowerCase(),
-          name: googleName.trim(),
+          email: selectedEmail.trim().toLowerCase(),
+          name: selectedName.trim(),
         }),
       });
 
@@ -110,7 +115,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
       setError(err.message || 'Google Sign-In failed');
     } finally {
       setLoading(false);
-      setShowGoogleModal(false);
+      setShowGoogleAccountPicker(false);
     }
   };
 
@@ -130,39 +135,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               ? 'Enter your account credentials to access your workspace.'
               : 'Create a new user profile to join workspace groups.'}
           </p>
-        </div>
-
-        {/* Google OAuth Button */}
-        <button
-          type="button"
-          onClick={() => setShowGoogleModal(true)}
-          className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl border border-slate-700/80 flex items-center justify-center gap-3 transition-all hover:border-slate-600 shadow-md"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <path
-              fill="#EA4335"
-              d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"
-            />
-            <path
-              fill="#4285F4"
-              d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.4 0 15.3c0 2.9.7 5.6 1.9 8l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"
-            />
-          </svg>
-          <span>Sign in with Google</span>
-        </button>
-
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-[1px] bg-slate-800" />
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">or email</span>
-          <div className="flex-1 h-[1px] bg-slate-800" />
         </div>
 
         {/* Tab Switcher */}
@@ -270,70 +242,173 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             )}
           </button>
         </form>
+
+        {/* Divider & Google OAuth Button at Bottom */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-[1px] bg-slate-800" />
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">or sign in with</span>
+            <div className="flex-1 h-[1px] bg-slate-800" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowGoogleAccountPicker(true)}
+            className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl border border-slate-700/80 flex items-center justify-center gap-3 transition-all hover:border-slate-600 shadow-md cursor-pointer"
+          >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+              <path
+                fill="#EA4335"
+                d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"
+              />
+              <path
+                fill="#4285F4"
+                d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.4 0 15.3c0 2.9.7 5.6 1.9 8l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"
+              />
+            </svg>
+            <span>Sign in with Google</span>
+          </button>
+        </div>
       </div>
 
-      {/* Google Sign In Modal */}
-      {showGoogleModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-black text-white flex items-center gap-2">
-                <span>Google Authentication</span>
-              </h3>
-              <button
-                onClick={() => setShowGoogleModal(false)}
-                className="text-xs text-slate-400 hover:text-white"
-              >
-                ✕
-              </button>
+      {/* Official-looking Google Account Selector Modal */}
+      {showGoogleAccountPicker && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white text-slate-800 rounded-3xl p-6 w-full max-w-sm space-y-5 shadow-2xl border border-slate-200">
+            {/* Google Brand Header */}
+            <div className="text-center space-y-1.5 border-b border-slate-100 pb-4">
+              <svg className="w-6 h-6 mx-auto mb-1" viewBox="0 0 24 24">
+                <path
+                  fill="#EA4335"
+                  d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"
+                />
+                <path
+                  fill="#4285F4"
+                  d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.4 0 15.3c0 2.9.7 5.6 1.9 8l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"
+                />
+              </svg>
+              <h3 className="text-base font-bold text-slate-900">Choose an account</h3>
+              <p className="text-xs text-slate-500">to continue to NEXUS HQ</p>
             </div>
 
-            <form onSubmit={handleGoogleLogin} className="space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Google Email
-                </label>
-                <input
-                  type="email"
-                  value={googleEmail}
-                  onChange={(e) => setGoogleEmail(e.target.value)}
-                  required
-                  placeholder="e.g. user@gmail.com"
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                />
-              </div>
+            {/* Account List */}
+            {!showCustomGoogleInput ? (
+              <div className="space-y-1">
+                {mockGoogleAccounts.map((acc) => (
+                  <button
+                    key={acc.email}
+                    onClick={() => handleSelectGoogleAccount(acc.email, acc.name)}
+                    className="w-full p-3 rounded-2xl border border-slate-100 hover:bg-slate-50 flex items-center gap-3 text-left transition-all group cursor-pointer"
+                  >
+                    <div className={`w-9 h-9 rounded-full ${acc.bg} text-white font-bold text-xs flex items-center justify-center shrink-0`}>
+                      {acc.avatar}
+                    </div>
+                    <div className="truncate flex-1">
+                      <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                        {acc.name}
+                      </p>
+                      <p className="text-[11px] text-slate-500 truncate">{acc.email}</p>
+                    </div>
+                    <span className="text-slate-400 text-xs">→</span>
+                  </button>
+                ))}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={googleName}
-                  onChange={(e) => setGoogleName(e.target.value)}
-                  required
-                  placeholder="e.g. Farhan Butt"
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
                 <button
-                  type="button"
-                  onClick={() => setShowGoogleModal(false)}
-                  className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white"
+                  onClick={() => setShowCustomGoogleInput(true)}
+                  className="w-full p-3 rounded-2xl border border-dashed border-slate-300 hover:bg-slate-50 flex items-center gap-3 text-left transition-all text-xs font-bold text-slate-600 cursor-pointer mt-2"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading || !googleEmail || !googleName}
-                  className="px-5 py-2 gradient-btn text-white font-extrabold text-xs rounded-xl shadow-lg"
-                >
-                  Continue with Google
+                  <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 font-bold text-sm flex items-center justify-center shrink-0">
+                    +
+                  </div>
+                  <span>Use another Google account</span>
                 </button>
               </div>
-            </form>
+            ) : (
+              /* Custom Account Input Option */
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (customGoogleEmail && customGoogleName) {
+                    handleSelectGoogleAccount(customGoogleEmail, customGoogleName);
+                  }
+                }}
+                className="space-y-3"
+              >
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Google Email
+                  </label>
+                  <input
+                    type="email"
+                    value={customGoogleEmail}
+                    onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                    required
+                    placeholder="name@gmail.com"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={customGoogleName}
+                    onChange={(e) => setCustomGoogleName(e.target.value)}
+                    required
+                    placeholder="Your Name"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomGoogleInput(false)}
+                    className="text-xs font-bold text-slate-500 hover:text-slate-900"
+                  >
+                    ← Back to account list
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow"
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Cancel Footer */}
+            <div className="pt-2 text-center border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowGoogleAccountPicker(false);
+                  setShowCustomGoogleInput(false);
+                }}
+                className="text-xs font-bold text-slate-500 hover:text-slate-800"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

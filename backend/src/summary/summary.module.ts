@@ -10,16 +10,18 @@ import { SummaryWorker } from './workers/summary.worker';
 import { AiWorker } from './workers/ai.worker';
 import { NotificationWorker } from './workers/notification.worker';
 
+import { QUEUES } from './summary.constants';
+
 @Module({
   imports: [
     BullModule.registerQueue(
-      { name: 'scheduler-queue' },
-      { name: 'summary-queue' },
-      { name: 'ai-queue' },
-      { name: 'notification-queue' },
+      { name: QUEUES.SCHEDULER },
+      { name: QUEUES.SUMMARY },
+      { name: QUEUES.AI },
+      { name: QUEUES.NOTIFICATION },
     ),
     BullModule.registerFlowProducer({
-      name: 'summary-flow-producer',
+      name: QUEUES.FLOW_PRODUCER,
     }),
     PrismaModule,
     MessagesModule,

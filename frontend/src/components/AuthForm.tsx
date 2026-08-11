@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
+import { API_BASE_URL, GOOGLE_CLIENT_ID } from '../config/constants';
+
 interface User {
   id: string;
   username: string;
@@ -21,7 +23,7 @@ declare global {
 
 export const AuthForm: React.FC<AuthFormProps> = ({
   onAuthSuccess,
-  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  apiUrl = API_BASE_URL,
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -31,9 +33,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const googleBtnRef = useRef<HTMLDivElement>(null);
-  const googleClientId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    '513945393185-ihrgusfgck0d6l2aemjl4h1gv4o50vs1.apps.googleusercontent.com';
+  const googleClientId = GOOGLE_CLIENT_ID;
 
   const handleGoogleResponse = async (response: any) => {
     if (!response.credential) return;

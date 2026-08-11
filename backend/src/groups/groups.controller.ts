@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards, } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -50,15 +50,5 @@ export class GroupsController {
   ) {
     return this.groupsService.leaveGroup(userId, id);
   }
-
-  @ApiOperation({ summary: 'Delete a group (Admin only)' })
-  @Delete(':id')
-  async deleteGroup(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
-    return this.groupsService.deleteGroup(userId, id);
-  }
 }
-
 

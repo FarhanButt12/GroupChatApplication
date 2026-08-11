@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
+import { API_BASE_URL } from '../config/constants';
+
 export interface GroupMemberInfo {
   userId: string;
   role?: string;
@@ -37,7 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRequestLogout,
   currentTheme,
   onThemeChange,
-  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  apiUrl = API_BASE_URL,
 }) => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

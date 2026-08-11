@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { API_BASE_URL } from '../config/constants';
 
 export interface Sender {
   id: string;
@@ -64,7 +65,7 @@ interface UseMessageSocketOptions {
 export function useMessageSocket({
   groupId,
   token,
-  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  apiUrl = API_BASE_URL,
 }: UseMessageSocketOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

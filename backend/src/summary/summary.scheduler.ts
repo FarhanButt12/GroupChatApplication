@@ -6,19 +6,18 @@ import { Queue } from 'bullmq';
 export class SummaryScheduler implements OnApplicationBootstrap {
   private readonly logger = new Logger(SummaryScheduler.name);
 
-  constructor(@InjectQueue('chat-summary') private readonly summaryQueue: Queue) {}
+  constructor(@InjectQueue('scheduler-queue') private readonly schedulerQueue: Queue) {}
 
   async onApplicationBootstrap() {
     await this.registerRepeatableJob();
   }
 
   /**
-   * Registers a repeatable BullMQ job running once every 24 hours.
+   * Registers a repeatable BullMQ job running once every 24 hours on scheduler-queue.
    */
   async registerRepeatableJob() {
     try {
-      // BullMQ v5+ upsertJobScheduler creates or updates the 24-hour job schedule cleanly
-      await this.summaryQueue.upsertJobScheduler(
+      await this.schedulerQueue.upsertJobScheduler(
         'chat-summary-scheduler',
         {
           every: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
@@ -29,7 +28,9 @@ export class SummaryScheduler implements OnApplicationBootstrap {
         },
       );
 
-      this.logger.log('Registered repeatable BullMQ job: chat-summary-scheduler (runs every 24h)');
+      this.logger.log(
+        'Registered repeatable BullMQ job: chat-summary-scheduler on scheduler-queue (runs every 24h)',
+      );
     } catch (error) {
       this.logger.error(`Failed to register repeatable job: ${error.message}`, error.stack);
     }
@@ -39,10 +40,10 @@ export class SummaryScheduler implements OnApplicationBootstrap {
    * Manual trigger method for immediate testing/verification
    */
   async triggerDailySummaryNow() {
-    this.logger.log('Manually triggering daily summary job execution');
-    const job = await this.summaryQueue.add('trigger-daily-summaries', {
+    this.logger.log('Manually triggering daily summary job execution on scheduler-queue');
+    const job = await this.schedulerQueue.add('trigger-daily-summaries', {
       triggeredAt: new Date().toISOString(),
     });
-    return { status: 'triggered', jobId: job.id };
+    return { status: 'triggered', jobId: job.id, queue: 'scheduler-queue' };
   }
 }

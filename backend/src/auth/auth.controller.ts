@@ -23,7 +23,7 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  @ApiOperation({ summary: 'Authenticate or sign up via Google OAuth' })
+  @ApiOperation({ summary: 'Authenticate user using Google OAuth ID token' })
   @HttpCode(HttpStatus.OK)
   @Post('google')
   async googleLogin(@Body() dto: GoogleLoginDto) {

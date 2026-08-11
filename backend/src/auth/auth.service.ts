@@ -10,16 +10,11 @@ import { GoogleLoginDto } from './dto/google-login.dto';
 
 @Injectable()
 export class AuthService {
-  private googleClient: OAuth2Client;
-
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {
-    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
-    this.googleClient = new OAuth2Client(clientId);
-  }
+  ) {}
 
   async register(dto: RegisterDto) {
     const email = dto.email.toLowerCase().trim();
@@ -96,62 +91,41 @@ export class AuthService {
   }
 
   async googleLogin(dto: GoogleLoginDto) {
-    let email: string = '';
-    let name: string = '';
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    const client = new OAuth2Client(clientId);
 
+    let payload;
     try {
-      // Real Google OAuth ID Token verification
-      const ticket = await this.googleClient.verifyIdToken({
+      const ticket = await client.verifyIdToken({
         idToken: dto.credential,
-        audience: this.configService.get<string>('GOOGLE_CLIENT_ID'),
+        audience: clientId,
       });
-      const payload = ticket.getPayload();
-      if (payload && payload.email) {
-        email = payload.email.toLowerCase().trim();
-        name = payload.name || payload.given_name || email.split('@')[0];
-      }
-    } catch (err) {
-      // Fallback parser if credential is a JWT or JSON profile payload passed from frontend
-      try {
-        const decoded: any = JSON.parse(
-          Buffer.from(dto.credential.split('.')[1] || '', 'base64').toString() || '{}',
-        );
-        if (decoded.email) {
-          email = decoded.email.toLowerCase().trim();
-          name = decoded.name || decoded.given_name || email.split('@')[0];
-        }
-      } catch (decodeErr) {
-        // Parse raw string or json if provided directly
-        try {
-          const jsonPayload = JSON.parse(dto.credential);
-          email = jsonPayload.email?.toLowerCase().trim();
-          name = jsonPayload.name || email.split('@')[0];
-        } catch (e) {}
-      }
+      payload = ticket.getPayload();
+    } catch (error) {
+      throw new UnauthorizedException('Invalid Google OAuth token');
     }
 
-    if (!email) {
-      throw new UnauthorizedException('Invalid Google authentication token');
+    if (!payload || !payload.email) {
+      throw new UnauthorizedException('Google authentication failed: Email missing');
     }
 
+    const email = payload.email.toLowerCase().trim();
     let user = await this.prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
-      // Generate unique username based on Google name
-      let baseUsername = (name || email.split('@')[0]).replace(/[^a-zA-Z0-9_]/g, '');
-      if (baseUsername.length < 3) baseUsername = `user_${baseUsername}`;
+      const baseUsername = (payload.name || email.split('@')[0])
+        .replace(/[^a-zA-Z0-9_]/g, '_')
+        .toLowerCase();
       let username = baseUsername;
-      let counter = 1;
+      let count = 1;
 
       while (await this.prisma.user.findUnique({ where: { username } })) {
-        username = `${baseUsername}_${counter}`;
-        counter++;
+        username = `${baseUsername}_${count++}`;
       }
 
-      const randomPassword = await bcrypt.hash(`google_${Date.now()}_${Math.random()}`, 10);
-
+      const randomPassword = await bcrypt.hash(Math.random().toString(36), 10);
       user = await this.prisma.user.create({
         data: {
           email,

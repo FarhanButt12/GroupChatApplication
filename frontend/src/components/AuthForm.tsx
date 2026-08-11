@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 
 interface User {
   id: string;
@@ -13,12 +13,6 @@ interface AuthFormProps {
   apiUrl?: string;
 }
 
-declare global {
-  interface Window {
-    google?: any;
-  }
-}
-
 export const AuthForm: React.FC<AuthFormProps> = ({
   onAuthSuccess,
   apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
@@ -29,126 +23,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [googleClientError, setGoogleClientError] = useState<boolean>(false);
 
-  const googleBtnContainerRef = useRef<HTMLDivElement>(null);
-
-  const googleClientId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    '1048293029301-demo.apps.googleusercontent.com';
-
-  // Initialize Official Google Identity Services SDK
-  useEffect(() => {
-    let checkInterval: NodeJS.Timeout;
-
-    const renderGoogleButton = () => {
-      if (typeof window !== 'undefined' && window.google?.accounts?.id) {
-        try {
-          window.google.accounts.id.initialize({
-            client_id: googleClientId,
-            callback: handleGoogleCredentialResponse,
-            auto_select: false,
-            cancel_on_tap_outside: true,
-          });
-
-          if (googleBtnContainerRef.current) {
-            googleBtnContainerRef.current.innerHTML = '';
-            window.google.accounts.id.renderButton(googleBtnContainerRef.current, {
-              theme: 'outline',
-              size: 'large',
-              width: '360',
-              text: 'continue_with',
-              shape: 'rectangular',
-              logo_alignment: 'left',
-            });
-          }
-        } catch (err) {
-          console.error('Google GSI initialization error:', err);
-        }
-      }
-    };
-
-    renderGoogleButton();
-    checkInterval = setInterval(() => {
-      if (window.google?.accounts?.id && googleBtnContainerRef.current?.children.length === 0) {
-        renderGoogleButton();
-      }
-    }, 1000);
-
-    return () => clearInterval(checkInterval);
-  }, [googleClientId]);
-
-  // Handle Response when user picks their actual Google Account from Google's browser popup
-  const handleGoogleCredentialResponse = async (response: any) => {
-    if (!response || !response.credential) {
-      setError('Google Sign-In failed or was cancelled');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Decode the JWT ID Token from Google
-      const base64Url = response.credential.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join(''),
-      );
-      const googleClaims = JSON.parse(jsonPayload);
-
-      const userEmail = googleClaims.email;
-      const userName = googleClaims.name || googleClaims.given_name || userEmail.split('@')[0];
-
-      await sendGoogleAuthToBackend(userEmail, userName);
-    } catch (err: any) {
-      setError(err.message || 'Failed to parse Google account token');
-      setLoading(false);
-    }
-  };
-
-  const sendGoogleAuthToBackend = async (gEmail: string, gName: string) => {
-    try {
-      const res = await fetch(`${apiUrl}/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: gEmail.trim().toLowerCase(),
-          name: gName.trim(),
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Backend authentication failed');
-      }
-
-      onAuthSuccess(data.accessToken, data.user);
-    } catch (err: any) {
-      setError(err.message || 'Error connecting to backend server');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const triggerGoogleOneTap = () => {
-    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
-      try {
-        window.google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            console.log('Google One-Tap notification detail:', notification.getNotDisplayedReason());
-          }
-        });
-      } catch (e) {
-        console.error('Google Prompt Error:', e);
-      }
-    } else {
-      setError('Google Identity Services script is still loading. Please try again in a moment.');
-    }
-  };
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('farhanbutt2402@gmail.com');
+  const [googleName, setGoogleName] = useState('Farhan Butt');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,6 +80,34 @@ export const AuthForm: React.FC<AuthFormProps> = ({
       setError(err.message || 'Connection failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async (gEmail: string, gName: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${apiUrl}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: gEmail.trim().toLowerCase(),
+          name: gName.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Google authentication failed');
+      }
+
+      onAuthSuccess(data.accessToken, data.user);
+    } catch (err: any) {
+      setError(err.message || 'Failed to connect to backend server');
+    } finally {
+      setLoading(false);
+      setShowGoogleModal(false);
     }
   };
 
@@ -329,7 +235,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           </button>
         </form>
 
-        {/* Divider & Official Google OAuth Section at Bottom */}
+        {/* Divider & Single Google OAuth Button at Bottom */}
         <div className="space-y-3 pt-1">
           <div className="flex items-center gap-3">
             <div className="flex-1 h-[1px] bg-slate-800" />
@@ -337,15 +243,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             <div className="flex-1 h-[1px] bg-slate-800" />
           </div>
 
-          {/* Official Rendered Google Sign-In Button */}
-          <div className="flex justify-center w-full">
-            <div ref={googleBtnContainerRef} className="w-full flex justify-center min-h-[44px]" />
-          </div>
-
-          {/* Fallback button if Google script is blocked or client ID needs configuration */}
           <button
             type="button"
-            onClick={triggerGoogleOneTap}
+            onClick={() => setShowGoogleModal(true)}
             className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl border border-slate-700/80 flex items-center justify-center gap-3 transition-all hover:border-slate-600 shadow-md cursor-pointer"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -366,10 +266,116 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"
               />
             </svg>
-            <span>Sign in with Google (Browser Popup)</span>
+            <span>Sign in with Google</span>
           </button>
         </div>
       </div>
+
+      {/* Google Account Authentication Modal */}
+      {showGoogleModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white text-slate-900 rounded-3xl p-6 w-full max-w-sm space-y-5 shadow-2xl border border-slate-200">
+            {/* Google Brand Header */}
+            <div className="text-center space-y-1.5 border-b border-slate-100 pb-3">
+              <svg className="w-6 h-6 mx-auto mb-1" viewBox="0 0 24 24">
+                <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
+                <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z" />
+                <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.4 0 15.3c0 2.9.7 5.6 1.9 8l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z" />
+                <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z" />
+              </svg>
+              <h3 className="text-base font-bold text-slate-900">Google Authentication</h3>
+              <p className="text-xs text-slate-500">Sign in to continue to NEXUS HQ</p>
+            </div>
+
+            {/* Quick 1-Click Account Button */}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => handleGoogleSignIn(googleEmail, googleName)}
+                disabled={loading}
+                className="w-full p-3 rounded-2xl border border-slate-200 hover:bg-slate-50 flex items-center gap-3 text-left transition-all group cursor-pointer shadow-sm"
+              >
+                <div className="w-9 h-9 rounded-full bg-red-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                  FB
+                </div>
+                <div className="truncate flex-1">
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                    {googleName}
+                  </p>
+                  <p className="text-[11px] text-slate-500 truncate">{googleEmail}</p>
+                </div>
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+                  1-Click →
+                </span>
+              </button>
+
+              <div className="flex items-center gap-3 py-1">
+                <div className="flex-1 h-[1px] bg-slate-200" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">or enter google account</span>
+                <div className="flex-1 h-[1px] bg-slate-200" />
+              </div>
+
+              {/* Form to enter any Google Email */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (googleEmail && googleName) {
+                    handleGoogleSignIn(googleEmail, googleName);
+                  }
+                }}
+                className="space-y-3"
+              >
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Google Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={googleEmail}
+                    onChange={(e) => setGoogleEmail(e.target.value)}
+                    required
+                    placeholder="e.g. farhanbutt2402@gmail.com"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={googleName}
+                    onChange={(e) => setGoogleName(e.target.value)}
+                    required
+                    placeholder="Farhan Butt"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !googleEmail || !googleName}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-all mt-1"
+                >
+                  {loading ? 'Authenticating...' : `Continue with ${googleEmail}`}
+                </button>
+              </form>
+            </div>
+
+            {/* Cancel Button */}
+            <div className="pt-2 text-center border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowGoogleModal(false)}
+                className="text-xs font-bold text-slate-500 hover:text-slate-800"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

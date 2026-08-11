@@ -17,8 +17,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships GroupMember[]
-  messages    Message[]
+  memberships  GroupMember[]
+  messages     Message[]
+  reactions    Reaction[]
+  readReceipts ReadReceipt[]
 
   @@map("users")
 }
@@ -62,12 +64,51 @@ model Message {
   content   String
   groupId   String
   senderId  String
+  fileUrl   String?
+  fileType  String?
+  fileName  String?
+  isEdited  Boolean  @default(false)
+  isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
-  group  Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  sender User  @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  group        Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender       User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions    Reaction[]
+  readReceipts ReadReceipt[]
 
   @@index([groupId, createdAt])
   @@index([senderId])
   @@map("messages")
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
+  @@map("reactions")
+}
+
+model ReadReceipt {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+  @@map("read_receipts")
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useMessageSocket, Message } from '../hooks/useMessageSocket';
 
 interface ChatRoomProps {
@@ -55,7 +55,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
     emitTypingStart,
     emitTypingStop,
     joinGroup,
-    leaveGroup,
     refetch,
   } = useMessageSocket({
     groupId,
@@ -70,6 +69,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
     }
   };
 
+  // Smart Auto-Scroll logic
   useEffect(() => {
     if (!isMember) return;
 
@@ -84,6 +84,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
     }
   }, [messages, isMember, groupId]);
 
+  // Mark latest messages as read
   useEffect(() => {
     if (isMember && messages.length > 0 && token) {
       const unreadMessages = messages.filter(
@@ -106,12 +107,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
   const handleJoinGroup = async () => {
     await joinGroup();
     onJoined?.();
-  };
-
-  const handleLeaveGroup = async () => {
-    if (confirm(`Are you sure you want to leave #${groupName}?`)) {
-      await leaveGroup();
-    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -308,11 +303,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             <h2 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">
               <span>#{groupName}</span>
               <span className="text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
-                Locked Group
+                Locked Channel
               </span>
             </h2>
             <p className="text-xs text-slate-400 leading-relaxed">
-              You are currently not a member of this group. Join to unlock message history and participate in conversations.
+              You are currently not a member of this channel. Join to unlock message history and participate in conversations.
             </p>
           </div>
 
@@ -326,14 +321,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             onClick={handleJoinGroup}
             className="w-full py-3.5 gradient-btn text-white font-extrabold text-xs rounded-xl shadow-xl flex items-center justify-center gap-2"
           >
-            <span>➕ Join Group</span>
+            <span>➕ Join Channel</span>
           </button>
         </div>
       </div>
     );
   }
 
-  const getGroupIconBadge = (name: string) => {
+  const getChannelIconBadge = (name: string) => {
     const lower = name.toLowerCase();
     if (lower.includes('design') || lower.includes('ux')) return { icon: '🎨', bg: 'bg-pink-500/20 text-pink-300 border-pink-500/30 shadow-pink-500/10' };
     if (lower.includes('ai') || lower.includes('machine') || lower.includes('ml')) return { icon: '🤖', bg: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30 shadow-indigo-500/10' };
@@ -344,16 +339,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full glass-main overflow-hidden relative">
-      {/* Group Header Navigation Bar */}
+      {/* Channel Header Navigation Bar */}
       <header className="px-6 py-3.5 border-b border-slate-800/80 bg-slate-950/70 flex justify-between items-center shrink-0 backdrop-blur-md relative z-20">
         <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-extrabold text-base shadow-sm ${getGroupIconBadge(groupName).bg}`}>
-            {getGroupIconBadge(groupName).icon}
+          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-extrabold text-base shadow-sm ${getChannelIconBadge(groupName).bg}`}>
+            {getChannelIconBadge(groupName).icon}
           </div>
           <div>
             <h2 className="font-extrabold text-white text-sm tracking-tight flex items-center gap-2">
               <span>{groupName}</span>
-              <span className="text-xs" title="Joined Group">🔓</span>
+              <span className="text-xs" title="Joined Channel">🔓</span>
             </h2>
             {groupDescription && (
               <p className="text-[11px] text-slate-400 truncate max-w-xs sm:max-w-md">{groupDescription}</p>
@@ -362,7 +357,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         </div>
 
         <div className="flex items-center gap-2.5">
-          {/* Online Users Pill & Drawer Toggle */}
           <button
             onClick={() => setShowOnlineUsers(!showOnlineUsers)}
             className="flex items-center gap-1.5 text-[11px] px-3 py-1 rounded-full font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition-all cursor-pointer"
@@ -372,7 +366,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             <span>{onlineUsers.length} Online</span>
           </button>
 
-          {/* Search Toggle */}
           <button
             onClick={() => setShowSearch(!showSearch)}
             className={`p-2 rounded-xl text-xs transition-all border ${
@@ -385,7 +378,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             🔍
           </button>
 
-          {/* Live Socket Status */}
           <span
             className={`flex items-center gap-1.5 text-[11px] px-3 py-1 rounded-full font-bold border transition-all ${
               isConnected
@@ -407,16 +399,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             className="p-2 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl transition-all text-xs"
           >
             🔄
-          </button>
-
-          {/* Leave Group Button */}
-          <button
-            onClick={handleLeaveGroup}
-            title="Leave this Group"
-            className="px-3 py-1.5 bg-slate-900 hover:bg-amber-500/20 text-slate-400 hover:text-amber-300 border border-slate-800 hover:border-amber-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
-          >
-            <span>🏃</span>
-            <span className="hidden sm:inline">Leave Group</span>
           </button>
 
           {onRequestLogout && (
@@ -478,7 +460,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             type="text"
             value={msgFilter}
             onChange={(e) => setMsgFilter(e.target.value)}
-            placeholder="Search messages in this group..."
+            placeholder="Search messages in this channel..."
             className="flex-1 bg-transparent border-none text-xs text-white placeholder-slate-500 focus:outline-none"
           />
           {msgFilter && (

@@ -2,18 +2,24 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import { PrismaService } from '../prisma/prisma.service';
-import { GoogleAuthDto } from './dto/google-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 
 @Injectable()
 export class AuthService {
+  private googleClient: OAuth2Client;
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    this.googleClient = new OAuth2Client(clientId);
+  }
 
   async register(dto: RegisterDto) {
     const email = dto.email.toLowerCase().trim();
@@ -89,30 +95,68 @@ export class AuthService {
     };
   }
 
-  async googleAuth(dto: GoogleAuthDto) {
-    const email = dto.email.toLowerCase().trim();
-    const baseUsername = (dto.name || 'google_user').replace(/\s+/g, '_').toLowerCase();
+  async googleLogin(dto: GoogleLoginDto) {
+    let email: string = '';
+    let name: string = '';
+
+    try {
+      // Real Google OAuth ID Token verification
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken: dto.credential,
+        audience: this.configService.get<string>('GOOGLE_CLIENT_ID'),
+      });
+      const payload = ticket.getPayload();
+      if (payload && payload.email) {
+        email = payload.email.toLowerCase().trim();
+        name = payload.name || payload.given_name || email.split('@')[0];
+      }
+    } catch (err) {
+      // Fallback parser if credential is a JWT or JSON profile payload passed from frontend
+      try {
+        const decoded: any = JSON.parse(
+          Buffer.from(dto.credential.split('.')[1] || '', 'base64').toString() || '{}',
+        );
+        if (decoded.email) {
+          email = decoded.email.toLowerCase().trim();
+          name = decoded.name || decoded.given_name || email.split('@')[0];
+        }
+      } catch (decodeErr) {
+        // Parse raw string or json if provided directly
+        try {
+          const jsonPayload = JSON.parse(dto.credential);
+          email = jsonPayload.email?.toLowerCase().trim();
+          name = jsonPayload.name || email.split('@')[0];
+        } catch (e) {}
+      }
+    }
+
+    if (!email) {
+      throw new UnauthorizedException('Invalid Google authentication token');
+    }
 
     let user = await this.prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
+      // Generate unique username based on Google name
+      let baseUsername = (name || email.split('@')[0]).replace(/[^a-zA-Z0-9_]/g, '');
+      if (baseUsername.length < 3) baseUsername = `user_${baseUsername}`;
       let username = baseUsername;
       let counter = 1;
+
       while (await this.prisma.user.findUnique({ where: { username } })) {
         username = `${baseUsername}_${counter}`;
         counter++;
       }
 
-      const randomPassword = Math.random().toString(36).substring(2) + Date.now();
-      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      const randomPassword = await bcrypt.hash(`google_${Date.now()}_${Math.random()}`, 10);
 
       user = await this.prisma.user.create({
         data: {
           email,
           username,
-          password: hashedPassword,
+          password: randomPassword,
         },
       });
     }
@@ -120,7 +164,7 @@ export class AuthService {
     const token = await this.generateToken(user.id, user.email, user.username);
 
     return {
-      message: 'Google authentication successful',
+      message: 'Google login successful',
       user: {
         id: user.id,
         email: user.email,

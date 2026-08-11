@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards, } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -10,7 +10,7 @@ import { GroupsService } from './groups.service';
 @Controller('groups')
 @UseGuards(JwtAuthGuard)
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(private readonly groupsService: GroupsService) { }
 
   @ApiOperation({ summary: 'Create a new group (Creator becomes ADMIN)' })
   @Post()
@@ -40,14 +40,5 @@ export class GroupsController {
     @Param('id') id: string,
   ) {
     return this.groupsService.joinGroup(userId, id);
-  }
-
-  @ApiOperation({ summary: 'Leave a group' })
-  @Post(':id/leave')
-  async leaveGroup(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
-    return this.groupsService.leaveGroup(userId, id);
   }
 }

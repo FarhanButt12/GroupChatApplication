@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface User {
   id: string;
@@ -11,6 +11,12 @@ interface User {
 interface AuthFormProps {
   onAuthSuccess: (token: string, user: User) => void;
   apiUrl?: string;
+}
+
+declare global {
+  interface Window {
+    google?: any;
+  }
 }
 
 export const AuthForm: React.FC<AuthFormProps> = ({
@@ -24,17 +30,95 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [showGoogleAccountPicker, setShowGoogleAccountPicker] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
-  const [customGoogleName, setCustomGoogleName] = useState('');
-  const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleName, setGoogleName] = useState('');
+  const googleBtnRef = useRef<HTMLDivElement>(null);
 
-  // Pre-configured Google Accounts for 1-click selection
-  const mockGoogleAccounts = [
-    { name: 'Farhan Butt', email: 'farhan.butt@gmail.com', avatar: 'FB', bg: 'bg-red-500' },
-    { name: 'Muhammad Farhan', email: 'farhan.dev@gmail.com', avatar: 'MF', bg: 'bg-blue-600' },
-    { name: 'Demo Workspace User', email: 'demo.workspace@gmail.com', avatar: 'DW', bg: 'bg-emerald-600' },
-  ];
+  // Initialize official Google Identity Services SDK
+  useEffect(() => {
+    const initGoogleGsi = () => {
+      if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1048293029301-demo.apps.googleusercontent.com',
+            callback: handleGoogleCredentialResponse,
+            auto_select: false,
+          });
+
+          if (googleBtnRef.current) {
+            window.google.accounts.id.renderButton(googleBtnRef.current, {
+              theme: 'outline',
+              size: 'large',
+              width: '100%',
+              text: 'continue_with',
+              shape: 'pill',
+            });
+          }
+        } catch (e) {
+          console.warn('Google GSI init warning:', e);
+        }
+      }
+    };
+
+    const timer = setTimeout(initGoogleGsi, 500);
+    return () => clearTimeout(timer);
+  }, [showGoogleModal]);
+
+  const handleGoogleCredentialResponse = async (response: any) => {
+    if (!response?.credential) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Decode JWT payload from Google Credential Token
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join(''),
+      );
+      const googleUser = JSON.parse(jsonPayload);
+
+      await authenticateGoogleUser(googleUser.email, googleUser.name || googleUser.given_name);
+    } catch (err: any) {
+      setError(err.message || 'Google Authentication parsing failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const authenticateGoogleUser = async (gEmail: string, gName: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${apiUrl}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: gEmail.trim().toLowerCase(),
+          name: gName.trim(),
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Google Auth service rejected request');
+      }
+
+      const data = await res.json();
+      onAuthSuccess(data.accessToken, data.user);
+    } catch (err: any) {
+      setError(err.message || 'Failed to connect to backend server');
+    } finally {
+      setLoading(false);
+      setShowGoogleModal(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,49 +169,37 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         onAuthSuccess(loginData.accessToken, loginData.user);
       }
     } catch (err: any) {
-      setError(err.message || 'Connection failed');
+      setError(err.message || 'Server connection error (Is backend running?)');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSelectGoogleAccount = async (selectedEmail: string, selectedName: string) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch(`${apiUrl}/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: selectedEmail.trim().toLowerCase(),
-          name: selectedName.trim(),
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Google Auth failed');
+  const triggerRealGooglePopup = () => {
+    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.prompt((notification: any) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            setShowGoogleModal(true);
+          }
+        });
+      } catch (e) {
+        setShowGoogleModal(true);
       }
-
-      onAuthSuccess(data.accessToken, data.user);
-    } catch (err: any) {
-      setError(err.message || 'Google Sign-In failed');
-    } finally {
-      setLoading(false);
-      setShowGoogleAccountPicker(false);
+    } else {
+      setShowGoogleModal(true);
     }
   };
 
   return (
     <div className="min-h-screen glass-main flex items-center justify-center p-4 relative overflow-hidden select-none">
-      <div className="w-full max-w-md glass-card p-8 rounded-3xl space-y-6 relative z-10 border border-slate-800 shadow-2xl">
-        {/* Brand Logo */}
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl gradient-btn flex items-center justify-center font-black text-white text-2xl mx-auto shadow-xl">
+      <div className="w-full max-w-md glass-card p-6 sm:p-8 rounded-3xl space-y-5 relative z-10 border border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
+        {/* Brand Header */}
+        <div className="text-center space-y-1.5">
+          <div className="w-12 h-12 rounded-2xl gradient-btn flex items-center justify-center font-black text-white text-xl mx-auto shadow-xl">
             ⚡
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">
+          <h1 className="text-xl font-black text-white tracking-tight">
             NEXUS HQ
           </h1>
           <p className="text-xs text-slate-400">
@@ -138,14 +210,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
+        <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800">
           <button
             type="button"
             onClick={() => {
               setMode('login');
               setError(null);
             }}
-            className={`flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all duration-200 ${
+            className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all duration-200 ${
               mode === 'login'
                 ? 'gradient-btn text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -159,7 +231,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               setMode('register');
               setError(null);
             }}
-            className={`flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all duration-200 ${
+            className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all duration-200 ${
               mode === 'register'
                 ? 'gradient-btn text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -171,17 +243,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
         {/* Error Alert */}
         {error && (
-          <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-400 text-xs text-center flex items-center justify-center gap-2">
+          <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs text-center flex items-center justify-center gap-2">
             <span>⚠️</span>
             <span>{error}</span>
           </div>
         )}
 
         {/* Input Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           {mode === 'register' && (
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-slate-300 mb-1">
                 Username
               </label>
               <input
@@ -191,13 +263,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 required
                 minLength={3}
                 placeholder="e.g. john_doe"
-                className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-slate-300 mb-1">
               Email Address
             </label>
             <input
@@ -206,12 +278,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="e.g. alice@example.com"
-              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-slate-300 mb-1">
               Password
             </label>
             <input
@@ -221,14 +293,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               required
               minLength={6}
               placeholder="Enter your password"
-              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading || !email || !password || (mode === 'register' && !username)}
-            className="w-full py-3.5 gradient-btn text-white font-black rounded-xl text-xs disabled:opacity-40 transition-all shadow-xl mt-2 flex justify-center items-center gap-2"
+            className="w-full py-3 gradient-btn text-white font-black rounded-xl text-xs disabled:opacity-40 transition-all shadow-xl mt-1 flex justify-center items-center gap-2"
           >
             {loading ? (
               <>
@@ -243,18 +315,22 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           </button>
         </form>
 
-        {/* Divider & Google OAuth Button at Bottom */}
-        <div className="space-y-4 pt-2">
+        {/* Divider & Google OAuth Section at Bottom */}
+        <div className="space-y-3 pt-1">
           <div className="flex items-center gap-3">
             <div className="flex-1 h-[1px] bg-slate-800" />
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">or sign in with</span>
             <div className="flex-1 h-[1px] bg-slate-800" />
           </div>
 
+          {/* Official Google GSI Button Container */}
+          <div ref={googleBtnRef} className="w-full min-h-[40px] flex justify-center" />
+
+          {/* Custom Trigger Button fallback */}
           <button
             type="button"
-            onClick={() => setShowGoogleAccountPicker(true)}
-            className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl border border-slate-700/80 flex items-center justify-center gap-3 transition-all hover:border-slate-600 shadow-md cursor-pointer"
+            onClick={triggerRealGooglePopup}
+            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl border border-slate-700/80 flex items-center justify-center gap-3 transition-all hover:border-slate-600 shadow-md cursor-pointer"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path
@@ -274,141 +350,87 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"
               />
             </svg>
-            <span>Sign in with Google</span>
+            <span>Sign in with Google Account</span>
           </button>
         </div>
       </div>
 
-      {/* Official-looking Google Account Selector Modal */}
-      {showGoogleAccountPicker && (
+      {/* Google Account Sign In Modal */}
+      {showGoogleModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white text-slate-800 rounded-3xl p-6 w-full max-w-sm space-y-5 shadow-2xl border border-slate-200">
-            {/* Google Brand Header */}
-            <div className="text-center space-y-1.5 border-b border-slate-100 pb-4">
-              <svg className="w-6 h-6 mx-auto mb-1" viewBox="0 0 24 24">
-                <path
-                  fill="#EA4335"
-                  d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"
-                />
-                <path
-                  fill="#4285F4"
-                  d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.4 0 15.3c0 2.9.7 5.6 1.9 8l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"
-                />
-              </svg>
-              <h3 className="text-base font-bold text-slate-900">Choose an account</h3>
-              <p className="text-xs text-slate-500">to continue to NEXUS HQ</p>
-            </div>
-
-            {/* Account List */}
-            {!showCustomGoogleInput ? (
-              <div className="space-y-1">
-                {mockGoogleAccounts.map((acc) => (
-                  <button
-                    key={acc.email}
-                    onClick={() => handleSelectGoogleAccount(acc.email, acc.name)}
-                    className="w-full p-3 rounded-2xl border border-slate-100 hover:bg-slate-50 flex items-center gap-3 text-left transition-all group cursor-pointer"
-                  >
-                    <div className={`w-9 h-9 rounded-full ${acc.bg} text-white font-bold text-xs flex items-center justify-center shrink-0`}>
-                      {acc.avatar}
-                    </div>
-                    <div className="truncate flex-1">
-                      <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                        {acc.name}
-                      </p>
-                      <p className="text-[11px] text-slate-500 truncate">{acc.email}</p>
-                    </div>
-                    <span className="text-slate-400 text-xs">→</span>
-                  </button>
-                ))}
-
-                <button
-                  onClick={() => setShowCustomGoogleInput(true)}
-                  className="w-full p-3 rounded-2xl border border-dashed border-slate-300 hover:bg-slate-50 flex items-center gap-3 text-left transition-all text-xs font-bold text-slate-600 cursor-pointer mt-2"
-                >
-                  <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 font-bold text-sm flex items-center justify-center shrink-0">
-                    +
-                  </div>
-                  <span>Use another Google account</span>
-                </button>
-              </div>
-            ) : (
-              /* Custom Account Input Option */
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (customGoogleEmail && customGoogleName) {
-                    handleSelectGoogleAccount(customGoogleEmail, customGoogleName);
-                  }
-                }}
-                className="space-y-3"
-              >
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Google Email
-                  </label>
-                  <input
-                    type="email"
-                    value={customGoogleEmail}
-                    onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                    required
-                    placeholder="name@gmail.com"
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Display Name
-                  </label>
-                  <input
-                    type="text"
-                    value={customGoogleName}
-                    onChange={(e) => setCustomGoogleName(e.target.value)}
-                    required
-                    placeholder="Your Name"
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="flex justify-between items-center pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomGoogleInput(false)}
-                    className="text-xs font-bold text-slate-500 hover:text-slate-900"
-                  >
-                    ← Back to account list
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow"
-                  >
-                    Sign In
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Cancel Footer */}
-            <div className="pt-2 text-center border-t border-slate-100">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-black text-white flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
+                  <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z" />
+                  <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.4 0 15.3c0 2.9.7 5.6 1.9 8l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z" />
+                  <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z" />
+                </svg>
+                <span>Google Account Sign-In</span>
+              </h3>
               <button
-                type="button"
-                onClick={() => {
-                  setShowGoogleAccountPicker(false);
-                  setShowCustomGoogleInput(false);
-                }}
-                className="text-xs font-bold text-slate-500 hover:text-slate-800"
+                onClick={() => setShowGoogleModal(false)}
+                className="text-xs text-slate-400 hover:text-white"
               >
-                Cancel
+                ✕
               </button>
             </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (googleEmail && googleName) {
+                  authenticateGoogleUser(googleEmail, googleName);
+                }
+              }}
+              className="space-y-3"
+            >
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Google Email
+                </label>
+                <input
+                  type="email"
+                  value={googleEmail}
+                  onChange={(e) => setGoogleEmail(e.target.value)}
+                  required
+                  placeholder="e.g. farhan@gmail.com"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Account Name
+                </label>
+                <input
+                  type="text"
+                  value={googleName}
+                  onChange={(e) => setGoogleName(e.target.value)}
+                  required
+                  placeholder="e.g. Farhan Butt"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowGoogleModal(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !googleEmail || !googleName}
+                  className="px-5 py-2 gradient-btn text-white font-extrabold text-xs rounded-xl shadow-lg"
+                >
+                  Sign In with Google
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

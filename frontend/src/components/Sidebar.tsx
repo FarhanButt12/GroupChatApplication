@@ -45,6 +45,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [userStatus, setUserStatus] = useState<'online' | 'focus' | 'away'>('online');
   const [loading, setLoading] = useState(true);
 
+  // Create Group Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDesc, setNewGroupDesc] = useState('');
+  const [creatingGroup, setCreatingGroup] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
   const fetchGroups = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/groups`, {
@@ -65,6 +72,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     if (token) fetchGroups();
   }, [token, fetchGroups]);
+
+  const handleCreateGroupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGroupName.trim()) return;
+
+    setCreatingGroup(true);
+    setCreateError(null);
+
+    try {
+      const res = await fetch(`${apiUrl}/groups`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: newGroupName.trim(),
+          description: newGroupDesc.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          Array.isArray(data.message)
+            ? data.message.join(', ')
+            : data.message || 'Failed to create group',
+        );
+      }
+
+      const createdGroup: Group = data.group || data;
+      
+      // Reset form and close modal
+      setNewGroupName('');
+      setNewGroupDesc('');
+      setShowCreateModal(false);
+
+      // Refresh group list and select new group automatically
+      await fetchGroups();
+      onSelectGroup(createdGroup);
+    } catch (err: any) {
+      setCreateError(err.message || 'Error creating group');
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
 
   const filteredGroups = groups.filter((group) => {
     const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -105,7 +159,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className="w-72 sm:w-80 glass-sidebar flex flex-col h-full shrink-0 select-none">
+    <aside className="w-72 sm:w-80 glass-sidebar flex flex-col h-full shrink-0 select-none relative">
       {/* Brand Header */}
       <div className="p-4 border-b border-slate-800/80 space-y-3">
         <div className="flex items-center justify-between">
@@ -189,12 +243,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Group Header */}
+      {/* Group Header & Create Group Trigger */}
       <div className="px-4 py-1 flex justify-between items-center text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
         <span>Workspace Groups</span>
-        <span className="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded font-bold">
-          {filteredGroups.length}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded font-bold">
+            {filteredGroups.length}
+          </span>
+          <button
+            onClick={() => {
+              setCreateError(null);
+              setShowCreateModal(true);
+            }}
+            className="text-[10px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 shadow-md hover:scale-105"
+            title="Create New Group"
+          >
+            <span>+</span> Create Group
+          </button>
+        </div>
       </div>
 
       {/* Group List */}
@@ -301,6 +367,92 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span>Sign Out Account</span>
         </button>
       </div>
+
+      {/* Create New Group Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-8 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-sm font-bold">
+                  ➕
+                </span>
+                <div>
+                  <h3 className="font-extrabold text-sm text-white">Create New Workspace Group</h3>
+                  <p className="text-[11px] text-slate-400">Collaborate with other team members</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-slate-400 hover:text-white text-base font-bold transition-all p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {createError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{createError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateGroupSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Group Name <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  required
+                  minLength={3}
+                  placeholder="e.g. AI Engineers & Developers"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Description <span className="text-slate-500">(Optional)</span>
+                </label>
+                <textarea
+                  value={newGroupDesc}
+                  onChange={(e) => setNewGroupDesc(e.target.value)}
+                  rows={3}
+                  placeholder="Describe the purpose of this group..."
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all resize-none"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 py-2.5 bg-slate-950 hover:bg-slate-800 text-slate-400 font-bold rounded-xl text-xs border border-slate-800 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingGroup || !newGroupName.trim()}
+                  className="flex-1 py-2.5 gradient-btn text-white font-black rounded-xl text-xs disabled:opacity-40 transition-all shadow-lg flex items-center justify-center gap-2"
+                >
+                  {creatingGroup ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    '🚀 Create Group'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 
 interface User {
   id: string;
@@ -11,12 +11,6 @@ interface User {
 interface AuthFormProps {
   onAuthSuccess: (token: string, user: User) => void;
   apiUrl?: string;
-}
-
-declare global {
-  interface Window {
-    google?: any;
-  }
 }
 
 export const AuthForm: React.FC<AuthFormProps> = ({
@@ -31,94 +25,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const [showGoogleModal, setShowGoogleModal] = useState(false);
-  const [googleEmail, setGoogleEmail] = useState('');
-  const [googleName, setGoogleName] = useState('');
-  const googleBtnRef = useRef<HTMLDivElement>(null);
-
-  // Initialize official Google Identity Services SDK
-  useEffect(() => {
-    const initGoogleGsi = () => {
-      if (typeof window !== 'undefined' && window.google?.accounts?.id) {
-        try {
-          window.google.accounts.id.initialize({
-            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1048293029301-demo.apps.googleusercontent.com',
-            callback: handleGoogleCredentialResponse,
-            auto_select: false,
-          });
-
-          if (googleBtnRef.current) {
-            window.google.accounts.id.renderButton(googleBtnRef.current, {
-              theme: 'outline',
-              size: 'large',
-              width: '100%',
-              text: 'continue_with',
-              shape: 'pill',
-            });
-          }
-        } catch (e) {
-          console.warn('Google GSI init warning:', e);
-        }
-      }
-    };
-
-    const timer = setTimeout(initGoogleGsi, 500);
-    return () => clearTimeout(timer);
-  }, [showGoogleModal]);
-
-  const handleGoogleCredentialResponse = async (response: any) => {
-    if (!response?.credential) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Decode JWT payload from Google Credential Token
-      const base64Url = response.credential.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join(''),
-      );
-      const googleUser = JSON.parse(jsonPayload);
-
-      await authenticateGoogleUser(googleUser.email, googleUser.name || googleUser.given_name);
-    } catch (err: any) {
-      setError(err.message || 'Google Authentication parsing failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const authenticateGoogleUser = async (gEmail: string, gName: string) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch(`${apiUrl}/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: gEmail.trim().toLowerCase(),
-          name: gName.trim(),
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Google Auth service rejected request');
-      }
-
-      const data = await res.json();
-      onAuthSuccess(data.accessToken, data.user);
-    } catch (err: any) {
-      setError(err.message || 'Failed to connect to backend server');
-    } finally {
-      setLoading(false);
-      setShowGoogleModal(false);
-    }
-  };
+  const [googleEmail, setGoogleEmail] = useState('farhanbutt2402@gmail.com');
+  const [googleName, setGoogleName] = useState('Farhan Butt');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,25 +77,40 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         onAuthSuccess(loginData.accessToken, loginData.user);
       }
     } catch (err: any) {
-      setError(err.message || 'Server connection error (Is backend running?)');
+      setError(err.message || 'Connection failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const triggerRealGooglePopup = () => {
-    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
-      try {
-        window.google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            setShowGoogleModal(true);
-          }
-        });
-      } catch (e) {
-        setShowGoogleModal(true);
+  const handleGoogleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!googleEmail || !googleName) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${apiUrl}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: googleEmail.trim().toLowerCase(),
+          name: googleName.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Google Auth failed');
       }
-    } else {
-      setShowGoogleModal(true);
+
+      onAuthSuccess(data.accessToken, data.user);
+    } catch (err: any) {
+      setError(err.message || 'Google Sign-In failed');
+    } finally {
+      setLoading(false);
+      setShowGoogleModal(false);
     }
   };
 
@@ -249,7 +172,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           </div>
         )}
 
-        {/* Input Form */}
+        {/* Form Inputs */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {mode === 'register' && (
             <div>
@@ -315,7 +238,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           </button>
         </form>
 
-        {/* Divider & Google OAuth Section at Bottom */}
+        {/* Divider & Single Google OAuth Button at Bottom */}
         <div className="space-y-3 pt-1">
           <div className="flex items-center gap-3">
             <div className="flex-1 h-[1px] bg-slate-800" />
@@ -323,13 +246,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             <div className="flex-1 h-[1px] bg-slate-800" />
           </div>
 
-          {/* Official Google GSI Button Container */}
-          <div ref={googleBtnRef} className="w-full min-h-[40px] flex justify-center" />
-
-          {/* Custom Trigger Button fallback */}
           <button
             type="button"
-            onClick={triggerRealGooglePopup}
+            onClick={() => setShowGoogleModal(true)}
             className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl border border-slate-700/80 flex items-center justify-center gap-3 transition-all hover:border-slate-600 shadow-md cursor-pointer"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -350,12 +269,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"
               />
             </svg>
-            <span>Sign in with Google Account</span>
+            <span>Sign in with Google</span>
           </button>
         </div>
       </div>
 
-      {/* Google Account Sign In Modal */}
+      {/* Google Sign In Modal */}
       {showGoogleModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
@@ -367,7 +286,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                   <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.4 0 15.3c0 2.9.7 5.6 1.9 8l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z" />
                   <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z" />
                 </svg>
-                <span>Google Account Sign-In</span>
+                <span>Google Account Authentication</span>
               </h3>
               <button
                 onClick={() => setShowGoogleModal(false)}
@@ -377,39 +296,31 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               </button>
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (googleEmail && googleName) {
-                  authenticateGoogleUser(googleEmail, googleName);
-                }
-              }}
-              className="space-y-3"
-            >
+            <form onSubmit={handleGoogleSubmit} className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Google Email
+                  Google Email Address
                 </label>
                 <input
                   type="email"
                   value={googleEmail}
                   onChange={(e) => setGoogleEmail(e.target.value)}
                   required
-                  placeholder="e.g. farhan@gmail.com"
+                  placeholder="farhanbutt2402@gmail.com"
                   className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Account Name
+                  Account Display Name
                 </label>
                 <input
                   type="text"
                   value={googleName}
                   onChange={(e) => setGoogleName(e.target.value)}
                   required
-                  placeholder="e.g. Farhan Butt"
+                  placeholder="Farhan Butt"
                   className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -427,7 +338,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                   disabled={loading || !googleEmail || !googleName}
                   className="px-5 py-2 gradient-btn text-white font-extrabold text-xs rounded-xl shadow-lg"
                 >
-                  Sign In with Google
+                  Continue as {googleName || 'Google User'}
                 </button>
               </div>
             </form>

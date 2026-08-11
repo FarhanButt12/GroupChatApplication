@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { USER_SELECT } from '../common/constants/user-select.constant';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -171,5 +171,39 @@ export class GroupsService {
       message: 'Successfully left group',
     };
   }
+
+  async deleteGroup(userId: string, groupId: string) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
+
+    if (!group) {
+      throw new NotFoundException(`Group with ID '${groupId}' not found`);
+    }
+
+    const membership = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership || membership.role !== 'ADMIN') {
+      throw new ForbiddenException('Only group admins can delete this group');
+    }
+
+    await this.prisma.group.delete({
+      where: {
+        id: groupId,
+      },
+    });
+
+    return {
+      message: 'Group deleted successfully',
+    };
+  }
 }
+
 

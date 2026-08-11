@@ -76,6 +76,10 @@ export default function HomePage() {
             currentUserId={currentUser.id}
             currentUsername={currentUser.username}
             onJoined={handleGroupJoined}
+            onLeft={() => {
+              setSelectedGroup(null);
+              setRefreshKey((prev) => prev + 1);
+            }}
             onRequestLogout={() => setIsLogoutModalOpen(true)}
           />
         ) : (

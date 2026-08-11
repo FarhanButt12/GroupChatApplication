@@ -36,6 +36,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
   const [showOnlineUsers, setShowOnlineUsers] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [groupMembers, setGroupMembers] = useState<Array<{ userId: string; role?: string }>>([]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -105,6 +106,51 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
       });
     }
   }, [messages, isMember, currentUserId, groupId, token, apiUrl]);
+
+  // Fetch Group details to get member roles (ADMIN vs MEMBER)
+  useEffect(() => {
+    if (groupId && token) {
+      fetch(`${apiUrl}/groups/${groupId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.members) {
+            setGroupMembers(data.members);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [groupId, token, apiUrl]);
+
+  const isAdmin = groupMembers.some((m) => m.userId === currentUserId && m.role === 'ADMIN');
+
+  const handleDeleteGroup = async () => {
+    if (
+      !confirm(
+        `⚠️ DANGER: Are you sure you want to PERMANENTLY delete group "${groupName}"?\nAll messages and history will be erased forever.`,
+      )
+    )
+      return;
+
+    try {
+      const res = await fetch(`${apiUrl}/groups/${groupId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        onLeft?.();
+      } else {
+        const errData = await res.json();
+        alert(errData.message || 'Failed to delete group');
+      }
+    } catch (err) {
+      console.error('Error deleting group:', err);
+    }
+  };
 
   const handleJoinGroup = async () => {
     await joinGroup();
@@ -435,6 +481,18 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             <span>🚶</span>
             <span className="hidden sm:inline">Leave Group</span>
           </button>
+
+          {/* Delete Group Button (Admin Only) */}
+          {isAdmin && (
+            <button
+              onClick={handleDeleteGroup}
+              className="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/40 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md hover:scale-105"
+              title="Delete this Group (Admin Only)"
+            >
+              <span>🗑️</span>
+              <span className="hidden sm:inline">Delete Group</span>
+            </button>
+          )}
 
           {onRequestLogout && (
             <button

@@ -35,13 +35,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
 
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isNearBottomRef = useRef<boolean>(true);
+  const prevGroupIdRef = useRef<string>(groupId);
 
   const quickEmojis = ['👍', '❤️', '🔥', '🚀', '😂', '🎉', '💯', '🙏'];
 
-  // Real-time WebSocket hook with presence, typing & live updates
   const {
     messages,
     loading,
@@ -60,11 +62,27 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
     apiUrl,
   });
 
-  useEffect(() => {
-    if (isMember) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const handleScroll = () => {
+    if (chatContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+      isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 150;
     }
-  }, [messages, isMember]);
+  };
+
+  // Smart Auto-Scroll logic
+  useEffect(() => {
+    if (!isMember) return;
+
+    const isGroupChanged = prevGroupIdRef.current !== groupId;
+    if (isGroupChanged) {
+      prevGroupIdRef.current = groupId;
+      isNearBottomRef.current = true;
+    }
+
+    if (isNearBottomRef.current || isGroupChanged) {
+      messagesEndRef.current?.scrollIntoView({ behavior: isGroupChanged ? 'auto' : 'smooth' });
+    }
+  }, [messages, isMember, groupId]);
 
   // Mark latest messages as read
   useEffect(() => {
@@ -131,6 +149,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
       }
 
       setNewMessage('');
+      isNearBottomRef.current = true;
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     } catch (err: any) {
       setSendError(err.message || 'Error sending message');
     } finally {
@@ -167,6 +187,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
 
       setNewMessage('');
       if (fileInputRef.current) fileInputRef.current.value = '';
+      isNearBottomRef.current = true;
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     } catch (err: any) {
       setSendError(err.message || 'Error uploading file');
     } finally {
@@ -269,7 +291,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
     );
   }
 
-  // Non-member Locked State Screen
   if (!isMember) {
     return (
       <div className="flex-1 flex flex-col justify-center items-center p-8 text-center glass-main relative select-none overflow-hidden">
@@ -336,7 +357,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         </div>
 
         <div className="flex items-center gap-2.5">
-          {/* Online Users Pill & Drawer Toggle */}
           <button
             onClick={() => setShowOnlineUsers(!showOnlineUsers)}
             className="flex items-center gap-1.5 text-[11px] px-3 py-1 rounded-full font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition-all cursor-pointer"
@@ -346,7 +366,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             <span>{onlineUsers.length} Online</span>
           </button>
 
-          {/* Search Toggle */}
           <button
             onClick={() => setShowSearch(!showSearch)}
             className={`p-2 rounded-xl text-xs transition-all border ${
@@ -359,7 +378,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             🔍
           </button>
 
-          {/* Live Socket Status */}
           <span
             className={`flex items-center gap-1.5 text-[11px] px-3 py-1 rounded-full font-bold border transition-all ${
               isConnected
@@ -395,7 +413,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         </div>
       </header>
 
-      {/* Online Users Popover Drawer */}
+      {/* Online Users Drawer */}
       {showOnlineUsers && (
         <div className="absolute top-14 right-6 z-30 w-64 bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-2xl backdrop-blur-xl">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
@@ -456,8 +474,12 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         </div>
       )}
 
-      {/* Messages Feed */}
-      <div className="flex-1 p-6 overflow-y-auto space-y-4">
+      {/* Messages Feed with Smart Scroll */}
+      <div
+        ref={chatContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 p-6 overflow-y-auto space-y-4"
+      >
         {filteredMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-2 select-none">
             <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-2xl shadow-inner">
@@ -477,7 +499,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
               ? currentUsername
               : msg.sender?.username || 'Member';
 
-            // Group reactions by emoji
             const reactionsMap = (msg.reactions || []).reduce(
               (acc, r) => {
                 if (!acc[r.emoji]) {
@@ -498,7 +519,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                 key={msg.id}
                 className={`group flex gap-3 ${isMine ? 'flex-row-reverse' : 'flex-row'} relative`}
               >
-                {/* User / Bot Avatar */}
                 <div
                   className={`w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black shrink-0 border relative shadow-lg ${
                     isAiBot
@@ -532,9 +552,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                     </span>
                   </div>
 
-                  {/* Message Bubble Container */}
                   <div className="relative group/bubble">
-                    {/* Hover Reaction & Edit Actions Toolbar */}
                     {!msg.isDeleted && (
                       <div
                         className={`absolute -top-3 ${
@@ -572,7 +590,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                       </div>
                     )}
 
-                    {/* Inline Edit Form OR Message Content */}
                     {editingMessageId === msg.id ? (
                       <div className="flex flex-col gap-2 p-2 bg-slate-900 border border-blue-500/50 rounded-xl">
                         <input
@@ -608,7 +625,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                             : 'bg-slate-900 text-slate-200 border border-slate-800 rounded-tl-none'
                         }`}
                       >
-                        {/* File / Image Attachment Preview */}
                         {msg.fileUrl && !msg.isDeleted && (
                           <div className="mb-2">
                             {msg.fileType === 'image' ? (
@@ -643,7 +659,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                     )}
                   </div>
 
-                  {/* Reaction Pills & Read Status */}
                   <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                     {Object.entries(reactionsMap).map(([emoji, data]) => (
                       <button
@@ -661,7 +676,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                       </button>
                     ))}
 
-                    {/* Read Receipts Checkmarks */}
                     {isMine && !msg.isDeleted && (
                       <span className="text-[10px] text-slate-500 ml-1 flex items-center gap-1">
                         {readCount > 0 ? (
@@ -711,7 +725,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         </div>
 
         <form onSubmit={handleSendMessage} className="flex gap-2 items-center">
-          {/* File Upload Hidden Input & Trigger */}
           <input
             type="file"
             ref={fileInputRef}

@@ -30,7 +30,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'your-google-client-id.apps.googleusercontent.com';
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '513945393185-ihrgusfgck0d6l2aemjl4h1gv4o50vs1.apps.googleusercontent.com';
 
   const handleGoogleResponse = async (response: any) => {
     if (!response.credential) return;

@@ -208,18 +208,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           </div>
         )}
 
-        {/* Official Google OAuth Interactive Button */}
-        <div className="flex justify-center w-full min-h-[44px]">
-          <div ref={googleBtnRef} className="w-full flex justify-center" />
-        </div>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-[1px] bg-slate-800"></div>
-          <span className="text-[11px] font-bold text-slate-500 uppercase">Or email</span>
-          <div className="flex-1 h-[1px] bg-slate-800"></div>
-        </div>
-
         {/* Input Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'register' && (
@@ -285,6 +273,18 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             )}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 pt-1">
+          <div className="flex-1 h-[1px] bg-slate-800"></div>
+          <span className="text-[11px] font-bold text-slate-500 uppercase">Or Google Auth</span>
+          <div className="flex-1 h-[1px] bg-slate-800"></div>
+        </div>
+
+        {/* Official Google OAuth Interactive Button at Bottom */}
+        <div className="flex justify-center w-full min-h-[44px]">
+          <div ref={googleBtnRef} className="w-full flex justify-center" />
+        </div>
       </div>
     </div>
   );

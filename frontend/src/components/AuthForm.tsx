@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface User {
   id: string;
@@ -30,7 +30,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '513945393185-ihrgusfgck0d6l2aemjl4h1gv4o50vs1.apps.googleusercontent.com';
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+  const googleClientId =
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    '513945393185-ihrgusfgck0d6l2aemjl4h1gv4o50vs1.apps.googleusercontent.com';
 
   const handleGoogleResponse = async (response: any) => {
     if (!response.credential) return;
@@ -62,7 +65,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   };
 
   useEffect(() => {
-    // Dynamically load Google Identity Services SDK script
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
@@ -72,7 +74,18 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         window.google.accounts.id.initialize({
           client_id: googleClientId,
           callback: handleGoogleResponse,
+          use_fedcm_for_prompt: false,
         });
+
+        if (googleBtnRef.current) {
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            theme: 'filled_blue',
+            size: 'large',
+            text: 'continue_with',
+            shape: 'rectangular',
+            width: 360,
+          });
+        }
       }
     };
     document.body.appendChild(script);
@@ -82,7 +95,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
     };
   }, [googleClientId]);
 
-  const handleGoogleClick = () => {
+  const handleGoogleClickFallback = () => {
     if (window.google) {
       window.google.accounts.id.prompt();
     } else {
@@ -203,10 +216,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({
           </div>
         )}
 
-        {/* Google OAuth Button */}
+        {/* Official Google OAuth Interactive Button */}
+        <div className="flex justify-center w-full">
+          <div ref={googleBtnRef} className="w-full flex justify-center" />
+        </div>
+
+        {/* Fallback Custom Google OAuth Button */}
         <button
           type="button"
-          onClick={handleGoogleClick}
+          onClick={handleGoogleClickFallback}
           disabled={loading}
           className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold rounded-xl text-xs border border-slate-800 hover:border-slate-700 transition-all flex items-center justify-center gap-3 shadow-lg"
         >

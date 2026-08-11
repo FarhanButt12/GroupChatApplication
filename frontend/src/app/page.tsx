@@ -84,9 +84,9 @@ export default function HomePage() {
               👈
             </div>
             <div className="max-w-sm space-y-1">
-              <h2 className="text-base font-extrabold text-white">No Channel Selected</h2>
+              <h2 className="text-base font-extrabold text-white">No Group Selected</h2>
               <p className="text-xs text-slate-400">
-                Select a channel from the left sidebar to start chatting or join a conversation.
+                Select a group from the left sidebar to start chatting or join a conversation.
               </p>
             </div>
           </div>

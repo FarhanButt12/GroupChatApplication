@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'monochrome-onyx', color: 'bg-slate-400', name: 'Monochrome Onyx' },
   ];
 
-  const getChannelBadge = (name: string) => {
+  const getGroupBadge = (name: string) => {
     const lower = name.toLowerCase();
     if (lower.includes('design') || lower.includes('ux')) {
       return { icon: '🎨', bg: 'bg-pink-500/20 text-pink-300 border-pink-500/30 shadow-pink-500/10' };
@@ -106,7 +106,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className="w-72 sm:w-80 glass-sidebar flex flex-col h-full shrink-0 select-none">
-
       {/* Brand Header */}
       <div className="p-4 border-b border-slate-800/80 space-y-3">
         <div className="flex items-center justify-between">
@@ -118,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <h1 className="font-extrabold text-base text-white tracking-tight leading-none flex items-center gap-1.5">
                 NEXUS <span className="text-[10px] text-cyan-400 font-extrabold bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">HQ</span>
               </h1>
-              <p className="text-[11px] text-slate-400 font-medium">Enterprise Communications</p>
+              <p className="text-[11px] text-slate-400 font-medium">Enterprise Workspace</p>
             </div>
           </div>
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="System Connected"></span>
@@ -142,14 +141,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Search & Channel Filters */}
+      {/* Search & Group Filters */}
       <div className="p-3 space-y-2.5">
         <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter channels..."
+            placeholder="Filter groups..."
             className="w-full pl-9 pr-3 py-2 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
           />
           <span className="absolute left-3 top-2.5 text-slate-500 text-xs">🔍</span>
@@ -190,15 +189,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Channel Header */}
+      {/* Group Header */}
       <div className="px-4 py-1 flex justify-between items-center text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
-        <span>Workspace Channels</span>
+        <span>Workspace Groups</span>
         <span className="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded font-bold">
           {filteredGroups.length}
         </span>
       </div>
 
-      {/* Channel List */}
+      {/* Group List */}
       <div className="flex-1 overflow-y-auto px-3 py-1 space-y-1.5">
         {loading ? (
           <div className="p-4 space-y-2">
@@ -206,12 +205,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="h-10 bg-slate-800/40 rounded-xl animate-pulse"></div>
           </div>
         ) : filteredGroups.length === 0 ? (
-          <div className="p-6 text-center text-xs text-slate-500">No channels found</div>
+          <div className="p-6 text-center text-xs text-slate-500">No groups found</div>
         ) : (
           filteredGroups.map((group) => {
             const isSelected = selectedGroup?.id === group.id;
             const isJoined = group.members?.some((m) => m.userId === currentUser.id);
-            const badge = getChannelBadge(group.name);
+            const badge = getGroupBadge(group.name);
 
             return (
               <button
@@ -294,7 +293,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </select>
         </div>
 
-        {/* Triggers Confirmation Modal */}
         <button
           onClick={onRequestLogout}
           className="w-full py-2.5 bg-slate-900 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-slate-800 hover:border-rose-500/30 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2"

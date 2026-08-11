@@ -280,6 +280,42 @@ export function useMessageSocket({
     }
   }, [groupId, token, apiUrl, fetchMessages]);
 
+  const leaveGroup = useCallback(async () => {
+    if (!groupId || !token) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${apiUrl}/groups/${groupId}/leave`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to leave group');
+      }
+
+      setIsMember(false);
+      setMessages([]);
+
+      if (socketRef.current?.connected) {
+        socketRef.current.emit('leaveRoom', { groupId });
+      }
+    } catch (err: any) {
+      if (isMountedRef.current) {
+        setError(err.message || 'Could not leave group');
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [groupId, token, apiUrl]);
+
   const refetch = useCallback(() => {
     return fetchMessages(false);
   }, [fetchMessages]);
@@ -295,6 +331,7 @@ export function useMessageSocket({
     emitTypingStart,
     emitTypingStop,
     joinGroup,
+    leaveGroup,
     refetch,
   };
 }

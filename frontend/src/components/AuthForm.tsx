@@ -151,24 +151,24 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   };
 
   return (
-    <div className="h-screen w-screen bg-slate-950 flex items-center justify-center p-3 sm:p-4 relative overflow-hidden select-none">
+    <div className="h-screen w-screen bg-slate-50 flex items-center justify-center p-3 sm:p-4 relative overflow-hidden select-none">
       {/* Background Ambient Glow Orbs */}
-      <div className="absolute top-1/4 -left-32 w-80 h-80 rounded-full bg-blue-600/10 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-32 w-80 h-80 rounded-full bg-indigo-600/10 blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/4 -left-32 w-80 h-80 rounded-full bg-blue-500/10 blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-32 w-80 h-80 rounded-full bg-indigo-500/10 blur-[100px] pointer-events-none" />
 
-      <div className="w-full max-w-md glass-card p-5 sm:p-6 rounded-3xl space-y-4 relative z-10 border border-slate-800/80 shadow-2xl backdrop-blur-2xl my-auto">
+      <div className="w-full max-w-md bg-white p-6 sm:p-7 rounded-3xl space-y-4 relative z-10 border border-slate-200 shadow-2xl shadow-slate-950/5 my-auto">
         {/* Brand Logo & Tagline */}
         <div className="text-center space-y-1.5">
-          <div className="relative w-12 h-12 rounded-2xl gradient-btn flex items-center justify-center font-black text-white text-xl mx-auto shadow-lg shadow-blue-500/20 ring-1 ring-white/20">
+          <div className="relative w-12 h-12 rounded-2xl gradient-btn flex items-center justify-center font-black text-white text-xl mx-auto shadow-lg shadow-blue-500/25 ring-2 ring-white">
             ⚡
-            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-slate-950 rounded-full animate-ping" />
-            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-slate-950 rounded-full" />
+            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full animate-ping" />
+            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
           </div>
           <div className="space-y-0.5">
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center justify-center gap-1.5">
-              NEXUS <span className="text-[10px] text-cyan-400 font-extrabold bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20 tracking-wider">HQ</span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center justify-center gap-1.5">
+              NEXUS <span className="text-[10px] text-blue-600 font-extrabold bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 tracking-wider">HQ</span>
             </h1>
-            <p className="text-[11px] text-slate-400 max-w-xs mx-auto font-medium">
+            <p className="text-[11px] text-slate-500 max-w-xs mx-auto font-medium">
               {mode === 'login'
                 ? 'Sign in to access your enterprise workspace.'
                 : 'Create an account to join workspace groups.'}
@@ -177,20 +177,20 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
           {/* Feature Badges Row */}
           <div className="flex items-center justify-center gap-1.5 pt-0.5">
-            <span className="text-[10px] font-bold text-slate-400 bg-slate-900/90 border border-slate-800/80 px-2 py-0.5 rounded-md flex items-center gap-1">
+            <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1">
               💬 WebSockets
             </span>
-            <span className="text-[10px] font-bold text-slate-400 bg-slate-900/90 border border-slate-800/80 px-2 py-0.5 rounded-md flex items-center gap-1">
+            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md flex items-center gap-1">
               🚀 Groq AI
             </span>
-            <span className="text-[10px] font-bold text-slate-400 bg-slate-900/90 border border-slate-800/80 px-2 py-0.5 rounded-md flex items-center gap-1">
+            <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1">
               ⚡ BullMQ
             </span>
           </div>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex bg-slate-950/90 p-1 rounded-xl border border-slate-800/80 shadow-inner">
+        <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
           <button
             type="button"
             onClick={() => {
@@ -200,7 +200,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             className={`flex-1 py-2 text-xs font-extrabold rounded-lg transition-all duration-150 ${
               mode === 'login'
                 ? 'gradient-btn text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Sign In
@@ -214,7 +214,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             className={`flex-1 py-2 text-xs font-extrabold rounded-lg transition-all duration-150 ${
               mode === 'register'
                 ? 'gradient-btn text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Create Account
@@ -223,7 +223,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
         {/* Error Alert */}
         {error && (
-          <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs text-center flex items-center justify-center gap-2">
+          <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-xs text-center flex items-center justify-center gap-2">
             <span className="text-xs">⚠️</span>
             <span className="font-semibold">{error}</span>
           </div>
@@ -233,7 +233,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
         <form onSubmit={handleSubmit} className="space-y-3">
           {mode === 'register' && (
             <div>
-              <label className="block text-[11px] font-extrabold text-slate-300 mb-1 uppercase tracking-wider">
+              <label className="block text-[11px] font-extrabold text-slate-700 mb-1 uppercase tracking-wider">
                 Username
               </label>
               <input
@@ -243,13 +243,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 required
                 minLength={3}
                 placeholder="e.g. john_doe"
-                className="w-full px-3.5 py-2 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+                className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/30 transition-all"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-300 mb-1 uppercase tracking-wider">
+            <label className="block text-[11px] font-extrabold text-slate-700 mb-1 uppercase tracking-wider">
               Email Address
             </label>
             <input
@@ -258,12 +258,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="e.g. alice@example.com"
-              className="w-full px-3.5 py-2 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+              className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/30 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-extrabold text-slate-300 mb-1 uppercase tracking-wider">
+            <label className="block text-[11px] font-extrabold text-slate-700 mb-1 uppercase tracking-wider">
               Password
             </label>
             <input
@@ -273,7 +273,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               required
               minLength={6}
               placeholder="Enter your password"
-              className="w-full px-3.5 py-2 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+              className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/30 transition-all"
             />
           </div>
 
@@ -297,9 +297,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({
 
         {/* Divider */}
         <div className="flex items-center gap-3 pt-1">
-          <div className="flex-1 h-[1px] bg-slate-800/80"></div>
-          <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Or continue with</span>
-          <div className="flex-1 h-[1px] bg-slate-800/80"></div>
+          <div className="flex-1 h-[1px] bg-slate-200"></div>
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Or continue with</span>
+          <div className="flex-1 h-[1px] bg-slate-200"></div>
         </div>
 
         {/* Official Working Google OAuth Interactive Button */}

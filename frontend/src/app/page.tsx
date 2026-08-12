@@ -111,7 +111,7 @@ export default function HomePage() {
                 <div className="p-3 bg-slate-950/80 border border-slate-800/80 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                    <span className="text-[11px] font-bold text-white">Gemini AI</span>
+                    <span className="text-[11px] font-bold text-white">Groq AI</span>
                   </div>
                   <p className="text-[10px] text-slate-400">Daily chat summaries</p>
                 </div>

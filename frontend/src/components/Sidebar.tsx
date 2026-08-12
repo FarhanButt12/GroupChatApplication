@@ -161,27 +161,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className="w-72 sm:w-80 glass-sidebar flex flex-col h-full shrink-0 select-none relative z-20 border-r border-slate-800/80">
+    <aside className="w-72 sm:w-80 glass-sidebar flex flex-col h-full shrink-0 select-none relative">
       {/* Brand Header */}
-      <div className="p-4 border-b border-slate-800/80 space-y-3 bg-slate-950/60 backdrop-blur-xl">
+      <div className="p-4 border-b border-slate-800/80 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center font-black text-white text-lg shadow-lg shadow-blue-500/20 ring-1 ring-white/20">
+            <div className="w-10 h-10 rounded-2xl gradient-btn flex items-center justify-center font-black text-white text-lg shadow-lg">
               ⚡
             </div>
             <div>
-              <h1 className="font-black text-base text-white tracking-tight leading-none flex items-center gap-1.5">
+              <h1 className="font-extrabold text-base text-white tracking-tight leading-none flex items-center gap-1.5">
                 NEXUS <span className="text-[10px] text-cyan-400 font-extrabold bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">HQ</span>
               </h1>
-              <p className="text-[11px] text-slate-400 font-medium pt-0.5">Enterprise Communications</p>
+              <p className="text-[11px] text-slate-400 font-medium">Enterprise Communications</p>
             </div>
           </div>
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse ring-4 ring-emerald-500/10" title="System Operational"></span>
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="System Connected"></span>
         </div>
 
         {/* Executive Palette Theme Selector */}
-        <div className="flex items-center justify-between bg-slate-950/90 p-2 rounded-xl border border-slate-800/80">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Palette:</span>
+        <div className="flex items-center justify-between bg-slate-950/80 p-2 rounded-xl border border-slate-800/80">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Palette:</span>
           <div className="flex items-center gap-2">
             {themes.map((t) => (
               <button
@@ -198,25 +198,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Search & Group Filters */}
-      <div className="p-3 space-y-2.5 bg-slate-950/40">
+      <div className="p-3 space-y-2.5">
         <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filter groups..."
-            className="w-full pl-9 pr-3 py-2 bg-slate-950/90 border border-slate-800/90 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 transition-all"
+            className="w-full pl-9 pr-3 py-2 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
           />
           <span className="absolute left-3 top-2.5 text-slate-500 text-xs">🔍</span>
         </div>
 
         {/* Filter Pills */}
-        <div className="flex bg-slate-950/90 p-1 rounded-xl border border-slate-800/80 text-[11px] font-extrabold">
+        <div className="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800/80 text-[11px] font-bold">
           <button
             onClick={() => setFilterMode('all')}
             className={`flex-1 py-1.5 rounded-lg transition-all ${
               filterMode === 'all'
-                ? 'gradient-btn text-white shadow-sm'
+                ? 'bg-slate-800 text-white shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -246,10 +246,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Group Header & Create Group Trigger */}
-      <div className="px-4 py-2 flex justify-between items-center text-[11px] font-extrabold text-slate-400 uppercase tracking-wider bg-slate-950/30">
+      <div className="px-4 py-1 flex justify-between items-center text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
         <span>Workspace Groups</span>
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded-md font-extrabold border border-slate-800">
+          <span className="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded font-bold">
             {filteredGroups.length}
           </span>
           <button
@@ -257,7 +257,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               setCreateError(null);
               setShowCreateModal(true);
             }}
-            className="text-[10px] gradient-btn text-white px-2.5 py-1 rounded-lg font-black transition-all flex items-center gap-1 shadow-md hover:scale-105"
+            className="text-[10px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-2 py-0.5 rounded-md font-bold transition-all flex items-center gap-1 shadow-md hover:scale-105"
             title="Create New Group"
           >
             <span>+</span> Create Group
@@ -266,17 +266,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Group List */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
+      <div className="flex-1 overflow-y-auto px-3 py-1 space-y-1.5">
         {loading ? (
           <div className="p-4 space-y-2">
-            <div className="h-11 bg-slate-900/60 rounded-xl animate-pulse border border-slate-800/40"></div>
-            <div className="h-11 bg-slate-900/60 rounded-xl animate-pulse border border-slate-800/40"></div>
-            <div className="h-11 bg-slate-900/60 rounded-xl animate-pulse border border-slate-800/40"></div>
+            <div className="h-10 bg-slate-800/40 rounded-xl animate-pulse"></div>
+            <div className="h-10 bg-slate-800/40 rounded-xl animate-pulse"></div>
           </div>
         ) : filteredGroups.length === 0 ? (
-          <div className="p-6 text-center text-xs font-semibold text-slate-500 bg-slate-950/40 rounded-2xl border border-slate-900">
-            No workspace groups found
-          </div>
+          <div className="p-6 text-center text-xs text-slate-500">No groups found</div>
         ) : (
           filteredGroups.map((group) => {
             const isSelected = selectedGroup?.id === group.id;
@@ -287,39 +284,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={group.id}
                 onClick={() => onSelectGroup(group)}
-                className={`w-full px-3 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between transition-all duration-200 border ${
+                className={`w-full px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-all duration-150 ${
                   isSelected
-                    ? 'bg-gradient-to-r from-blue-600/30 via-indigo-600/20 to-slate-900 border-blue-500/50 text-white shadow-lg shadow-blue-500/10'
-                    : 'bg-slate-950/50 hover:bg-slate-900/80 border-slate-900/80 text-slate-300 hover:text-white'
+                    ? 'channel-card-active'
+                    : 'channel-card-inactive'
                 }`}
               >
-                <div className="flex items-center gap-3 truncate">
+                <div className="flex items-center gap-2.5 truncate">
                   <div
-                    className={`w-8 h-8 rounded-xl border flex items-center justify-center text-sm shrink-0 shadow-md transition-transform ${
-                      isSelected ? 'scale-105 ring-2 ring-blue-500/40' : ''
+                    className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs shrink-0 shadow-sm transition-transform ${
+                      isSelected ? 'scale-105 ring-2 ring-blue-500/30' : ''
                     } ${badge.bg}`}
                   >
                     {badge.icon}
                   </div>
-                  <span className="truncate font-extrabold text-white text-xs">{group.name}</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[11px]" title={isJoined ? 'Joined Workspace Member' : 'Not Joined (Locked)'}>
+                  <span className="truncate">{group.name}</span>
+                  <span className="text-[11px] shrink-0" title={isJoined ? 'Joined (Unlocked)' : 'Not Joined (Locked)'}>
                     {isJoined ? '🔓' : '🔒'}
                   </span>
-                  {group._count?.messages !== undefined && (
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${
-                        isSelected
-                          ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
-                          : 'bg-slate-900 text-slate-400 border border-slate-800'
-                      }`}
-                    >
-                      {group._count.messages}
-                    </span>
-                  )}
                 </div>
+
+                {group._count?.messages !== undefined && (
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${
+                      isSelected
+                        ? 'bg-slate-950/80 text-blue-300 border border-blue-500/30'
+                        : 'bg-slate-950 text-slate-500 border border-slate-800'
+                    }`}
+                  >
+                    {group._count.messages}
+                  </span>
+                )}
               </button>
             );
           })
@@ -327,12 +322,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* User Footer Profile & Sign Out Request */}
-      <div className="p-3.5 bg-slate-950/95 border-t border-slate-800/80 space-y-3 relative z-20">
+      <div className="p-3.5 bg-slate-950/90 border-t border-slate-800/80 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 truncate">
             <div className="relative shrink-0">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 border border-blue-400/40 flex items-center justify-center font-black text-white text-xs shadow-lg shadow-blue-500/20 relative">
                 {getInitials(currentUser.username)}
+                <span className="absolute -top-1 -left-1 text-[10px]" title="Authenticated Member">⚡</span>
               </div>
               <span
                 className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-950 ${
@@ -345,10 +341,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               />
             </div>
             <div className="truncate text-left">
-              <p className="text-xs font-black text-white truncate leading-tight">
+              <p className="text-xs font-bold text-white truncate leading-tight">
                 {currentUser.username}
               </p>
-              <p className="text-[10px] text-slate-400 truncate leading-tight font-medium">
+              <p className="text-[10px] text-slate-400 truncate leading-tight">
                 {currentUser.email}
               </p>
             </div>
@@ -357,7 +353,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <select
             value={userStatus}
             onChange={(e) => setUserStatus(e.target.value as any)}
-            className="bg-slate-900 text-[10px] font-extrabold text-slate-300 border border-slate-800 rounded-xl px-2 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
+            className="bg-slate-900 text-[10px] font-bold text-slate-300 border border-slate-800 rounded-lg px-2 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="online">🟢 Online</option>
             <option value="focus">🌙 Focus</option>
@@ -367,7 +363,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button
           onClick={onRequestLogout}
-          className="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 hover:scale-[1.01]"
+          className="w-full py-2.5 bg-slate-900 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-slate-800 hover:border-rose-500/30 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2"
         >
           <span>🚪</span>
           <span>Sign Out Account</span>

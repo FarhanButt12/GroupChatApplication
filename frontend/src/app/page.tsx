@@ -79,45 +79,45 @@ export default function HomePage() {
             onRequestLogout={() => setIsLogoutModalOpen(true)}
           />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-slate-50 text-slate-600 space-y-6 select-none relative overflow-hidden">
+          <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-slate-950/80 text-slate-400 space-y-6 select-none relative overflow-hidden">
             {/* Ambient Background Glow */}
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-blue-500/10 blur-[130px] pointer-events-none" />
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-blue-600/10 blur-[130px] pointer-events-none" />
 
             {/* Central Welcome Card */}
-            <div className="relative z-10 max-w-md w-full bg-white p-8 rounded-3xl border border-slate-200 shadow-xl shadow-slate-950/5 space-y-5">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 border border-blue-400/30 flex items-center justify-center text-3xl shadow-lg shadow-blue-500/25 mx-auto text-white">
+            <div className="relative z-10 max-w-md w-full glass-card p-8 rounded-3xl border border-slate-800/80 shadow-2xl space-y-5 backdrop-blur-xl">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 border border-blue-400/30 flex items-center justify-center text-3xl shadow-xl shadow-blue-500/20 mx-auto">
                 ⚡
               </div>
 
               <div className="space-y-1.5">
-                <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+                <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
                   Welcome to NEXUS HQ
                 </h2>
-                <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                  Select a workspace group from the left sidebar to start collaborating, or click <span className="text-blue-600 font-bold">+ Create Group</span> to initiate a new room.
+                <p className="text-xs text-slate-400 leading-relaxed font-medium">
+                  Select a workspace group from the left sidebar to start collaborating, or click <span className="text-cyan-400 font-bold">+ Create Group</span> to initiate a new room.
                 </p>
               </div>
 
               {/* Status Grid */}
               <div className="grid grid-cols-2 gap-2 pt-2 text-left">
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                <div className="p-3 bg-slate-950/80 border border-slate-800/80 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[11px] font-bold text-slate-900">WebSockets</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[11px] font-bold text-white">WebSockets</span>
                   </div>
-                  <p className="text-[10px] text-slate-500">Zero-latency live chat</p>
+                  <p className="text-[10px] text-slate-400">Zero-latency live chat</p>
                 </div>
 
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                <div className="p-3 bg-slate-950/80 border border-slate-800/80 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                    <span className="text-[11px] font-bold text-slate-900">Groq AI</span>
+                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                    <span className="text-[11px] font-bold text-white">Groq AI</span>
                   </div>
-                  <p className="text-[10px] text-slate-500">Daily chat summaries</p>
+                  <p className="text-[10px] text-slate-400">Daily chat summaries</p>
                 </div>
               </div>
 
-              <div className="pt-1 flex items-center justify-center gap-2 text-[11px] font-extrabold text-blue-700 bg-blue-50 py-2.5 px-4 rounded-xl border border-blue-200">
+              <div className="pt-1 flex items-center justify-center gap-2 text-[11px] font-extrabold text-blue-400 bg-blue-500/10 py-2.5 px-4 rounded-xl border border-blue-500/20">
                 <span>👈</span>
                 <span>Select a group from the sidebar to start</span>
               </div>

@@ -14,121 +14,189 @@ async function main() {
 
   const passwordHash = await bcrypt.hash('password123', 10);
 
-  // 1. Create 4 Users
-  const alice = await prisma.user.create({
-    data: {
-      email: 'alice@example.com',
-      username: 'alice',
-      password: passwordHash,
-    },
-  });
+  // 1. Create 10 Users
+  const userNames = [
+    'alice',
+    'bob',
+    'charlie',
+    'diana',
+    'eve',
+    'frank',
+    'grace',
+    'hank',
+    'ivy',
+    'jack',
+  ];
 
-  const bob = await prisma.user.create({
-    data: {
-      email: 'bob@example.com',
-      username: 'bob',
-      password: passwordHash,
-    },
-  });
+  const users: Record<string, any> = {};
 
-  const charlie = await prisma.user.create({
-    data: {
-      email: 'charlie@example.com',
-      username: 'charlie',
-      password: passwordHash,
-    },
-  });
+  for (const username of userNames) {
+    users[username] = await prisma.user.create({
+      data: {
+        email: `${username}@example.com`,
+        username,
+        password: passwordHash,
+      },
+    });
+  }
 
-  const diana = await prisma.user.create({
-    data: {
-      email: 'diana@example.com',
-      username: 'diana',
-      password: passwordHash,
-    },
-  });
+  console.log('✅ Created 10 Users: Alice, Bob, Charlie, Diana, Eve, Frank, Grace, Hank, Ivy, Jack');
 
-  console.log('✅ Created 4 Users: Alice, Bob, Charlie, Diana');
-
-  // 2. Create Group 1: Tech Talk (Alice is ADMIN, Bob & Charlie join)
+  // 2. Create Group 1: Tech Talk (Alice is ADMIN)
   const techGroup = await prisma.group.create({
     data: {
       name: 'Tech Talk',
-      description: 'Discussing NestJS, PostgreSQL & Prisma',
+      description: 'Discussing NestJS, PostgreSQL, Prisma & Backend Architecture',
       members: {
         create: [
-          { userId: alice.id, role: 'ADMIN' },
-          { userId: bob.id, role: 'MEMBER' },
-          { userId: charlie.id, role: 'MEMBER' },
+          { userId: users['alice'].id, role: 'ADMIN' },
+          { userId: users['bob'].id, role: 'MEMBER' },
+          { userId: users['charlie'].id, role: 'MEMBER' },
+          { userId: users['eve'].id, role: 'MEMBER' },
+          { userId: users['frank'].id, role: 'MEMBER' },
         ],
       },
     },
   });
 
-  // 3. Create Group 2: Gaming Hub (Bob is ADMIN, Charlie & Diana join)
+  // 3. Create Group 2: Gaming Hub (Bob is ADMIN)
   const gamingGroup = await prisma.group.create({
     data: {
       name: 'Gaming Hub',
       description: 'Gamers assemble for evening multiplayer sessions',
       members: {
         create: [
-          { userId: bob.id, role: 'ADMIN' },
-          { userId: charlie.id, role: 'MEMBER' },
-          { userId: diana.id, role: 'MEMBER' },
+          { userId: users['bob'].id, role: 'ADMIN' },
+          { userId: users['charlie'].id, role: 'MEMBER' },
+          { userId: users['diana'].id, role: 'MEMBER' },
+          { userId: users['grace'].id, role: 'MEMBER' },
+          { userId: users['hank'].id, role: 'MEMBER' },
         ],
       },
     },
   });
 
-  console.log('✅ Created 2 Groups: Tech Talk & Gaming Hub');
+  // 4. Create Group 3: AI & Machine Learning (Eve is ADMIN)
+  const aiGroup = await prisma.group.create({
+    data: {
+      name: 'AI & Machine Learning',
+      description: 'Exploring LLMs, Neural Networks, and AI Innovation',
+      members: {
+        create: [
+          { userId: users['eve'].id, role: 'ADMIN' },
+          { userId: users['alice'].id, role: 'MEMBER' },
+          { userId: users['frank'].id, role: 'MEMBER' },
+          { userId: users['ivy'].id, role: 'MEMBER' },
+          { userId: users['jack'].id, role: 'MEMBER' },
+        ],
+      },
+    },
+  });
 
-  // 4. Create Messages in Tech Talk
+  // 5. Create Group 4: Design & UX (Grace is ADMIN)
+  const designGroup = await prisma.group.create({
+    data: {
+      name: 'Design & UX',
+      description: 'UI/UX best practices, Figma prototypes, and micro-interactions',
+      members: {
+        create: [
+          { userId: users['grace'].id, role: 'ADMIN' },
+          { userId: users['diana'].id, role: 'MEMBER' },
+          { userId: users['hank'].id, role: 'MEMBER' },
+          { userId: users['ivy'].id, role: 'MEMBER' },
+          { userId: users['jack'].id, role: 'MEMBER' },
+        ],
+      },
+    },
+  });
+
+  console.log('✅ Created 4 Groups: Tech Talk, Gaming Hub, AI & ML, Design & UX');
+
+  // 6. Create Messages in Tech Talk
   await prisma.message.createMany({
     data: [
       {
         content: 'Welcome everyone to Tech Talk!',
         groupId: techGroup.id,
-        senderId: alice.id,
+        senderId: users['alice'].id,
       },
       {
         content: 'Hey Alice! Excited to build with NestJS and Prisma.',
         groupId: techGroup.id,
-        senderId: bob.id,
+        senderId: users['bob'].id,
       },
       {
-        content: 'Count me in! The database indexes work super fast.',
+        content: 'Count me in! Database indexing makes pagination instant.',
         groupId: techGroup.id,
-        senderId: charlie.id,
+        senderId: users['charlie'].id,
       },
       {
-        content: 'Awesome! Phase 1 REST API is completely functional.',
+        content: 'Clean architecture makes the codebase super maintainable.',
         groupId: techGroup.id,
-        senderId: alice.id,
+        senderId: users['eve'].id,
       },
     ],
   });
 
-  // 5. Create Messages in Gaming Hub
+  // 7. Create Messages in Gaming Hub
   await prisma.message.createMany({
     data: [
       {
         content: 'Who is up for some multiplayer games tonight?',
         groupId: gamingGroup.id,
-        senderId: bob.id,
+        senderId: users['bob'].id,
       },
       {
         content: 'I am ready! What game are we playing?',
         groupId: gamingGroup.id,
-        senderId: diana.id,
+        senderId: users['diana'].id,
       },
       {
-        content: 'Count me in as well!',
+        content: 'Let us set up a tournament!',
         groupId: gamingGroup.id,
-        senderId: charlie.id,
+        senderId: users['grace'].id,
       },
     ],
   });
 
-  console.log('✅ Created initial chat messages across both groups!');
+  // 8. Create Messages in AI & Machine Learning
+  await prisma.message.createMany({
+    data: [
+      {
+        content: 'Welcome to AI & Machine Learning group!',
+        groupId: aiGroup.id,
+        senderId: users['eve'].id,
+      },
+      {
+        content: 'Has anyone tested the latest Gemini model APIs?',
+        groupId: aiGroup.id,
+        senderId: users['ivy'].id,
+      },
+      {
+        content: 'Yes! The latency and reasoning capabilities are top tier.',
+        groupId: aiGroup.id,
+        senderId: users['jack'].id,
+      },
+    ],
+  });
+
+  // 9. Create Messages in Design & UX
+  await prisma.message.createMany({
+    data: [
+      {
+        content: 'Welcome designers and UX enthusiasts!',
+        groupId: designGroup.id,
+        senderId: users['grace'].id,
+      },
+      {
+        content: 'Excited to share some dark mode glassmorphism UI mockups!',
+        groupId: designGroup.id,
+        senderId: users['ivy'].id,
+      },
+    ],
+  });
+
+  console.log('✅ Created initial chat messages across all 4 groups!');
   console.log('🎉 Database seeding completed successfully!');
 }
 

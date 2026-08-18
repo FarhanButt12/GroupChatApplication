@@ -87,8 +87,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'monochrome-onyx', color: 'bg-slate-400', name: 'Monochrome Onyx' },
   ];
 
+  const getChannelBadge = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('design') || lower.includes('ux')) {
+      return { icon: '🎨', bg: 'bg-pink-500/20 text-pink-300 border-pink-500/30 shadow-pink-500/10' };
+    }
+    if (lower.includes('ai') || lower.includes('machine') || lower.includes('ml')) {
+      return { icon: '🤖', bg: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30 shadow-indigo-500/10' };
+    }
+    if (lower.includes('gaming') || lower.includes('game')) {
+      return { icon: '🎮', bg: 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-amber-500/10' };
+    }
+    if (lower.includes('tech') || lower.includes('code') || lower.includes('dev')) {
+      return { icon: '💻', bg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30 shadow-cyan-500/10' };
+    }
+    return { icon: '💬', bg: 'bg-blue-500/20 text-blue-300 border-blue-500/30 shadow-blue-500/10' };
+  };
+
   return (
     <aside className="w-72 sm:w-80 glass-sidebar flex flex-col h-full shrink-0 select-none">
+
       {/* Brand Header */}
       <div className="p-4 border-b border-slate-800/80 space-y-3">
         <div className="flex items-center justify-between">
@@ -193,23 +211,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
           filteredGroups.map((group) => {
             const isSelected = selectedGroup?.id === group.id;
             const isJoined = group.members?.some((m) => m.userId === currentUser.id);
+            const badge = getChannelBadge(group.name);
 
             return (
               <button
                 key={group.id}
                 onClick={() => onSelectGroup(group)}
-                className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between transition-all duration-150 ${
+                className={`w-full px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-all duration-150 ${
                   isSelected
                     ? 'channel-card-active'
                     : 'channel-card-inactive'
                 }`}
               >
                 <div className="flex items-center gap-2.5 truncate">
-                  <span className={`text-sm ${isSelected ? 'text-blue-400 font-black' : 'text-slate-500'}`}>
-                    #
-                  </span>
+                  <div
+                    className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs shrink-0 shadow-sm transition-transform ${
+                      isSelected ? 'scale-105 ring-2 ring-blue-500/30' : ''
+                    } ${badge.bg}`}
+                  >
+                    {badge.icon}
+                  </div>
                   <span className="truncate">{group.name}</span>
-                  <span className="text-xs shrink-0" title={isJoined ? 'Joined (Unlocked)' : 'Not Joined (Locked)'}>
+                  <span className="text-[11px] shrink-0" title={isJoined ? 'Joined (Unlocked)' : 'Not Joined (Locked)'}>
                     {isJoined ? '🔓' : '🔒'}
                   </span>
                 </div>
@@ -236,13 +259,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 truncate">
             <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-black text-white text-xs">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 border border-blue-400/40 flex items-center justify-center font-black text-white text-xs shadow-lg shadow-blue-500/20 relative">
                 {getInitials(currentUser.username)}
+                <span className="absolute -top-1 -left-1 text-[10px]" title="Authenticated Member">⚡</span>
               </div>
               <span
-                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-950 ${
+                className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-950 ${
                   userStatus === 'online'
-                    ? 'bg-emerald-400'
+                    ? 'bg-emerald-400 animate-pulse'
                     : userStatus === 'focus'
                     ? 'bg-amber-400'
                     : 'bg-slate-500'

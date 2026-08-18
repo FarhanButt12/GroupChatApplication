@@ -103,9 +103,27 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
     return (name || 'U').substring(0, 2).toUpperCase();
   };
 
+  const getAvatarGradient = (username: string) => {
+    if (!username) return 'from-slate-700 to-slate-900 border-slate-700 text-slate-200';
+    const gradients = [
+      'bg-gradient-to-br from-blue-600 to-indigo-700 border-blue-400/40 text-white shadow-blue-500/20',
+      'bg-gradient-to-br from-emerald-500 to-teal-700 border-emerald-400/40 text-white shadow-emerald-500/20',
+      'bg-gradient-to-br from-violet-600 to-purple-800 border-purple-400/40 text-white shadow-purple-500/20',
+      'bg-gradient-to-br from-amber-500 to-orange-700 border-amber-400/40 text-white shadow-amber-500/20',
+      'bg-gradient-to-br from-cyan-500 to-blue-700 border-cyan-400/40 text-white shadow-cyan-500/20',
+      'bg-gradient-to-br from-rose-500 to-pink-700 border-rose-400/40 text-white shadow-rose-500/20',
+    ];
+    let sum = 0;
+    for (let i = 0; i < username.length; i++) {
+      sum += username.charCodeAt(i);
+    }
+    return gradients[sum % gradients.length];
+  };
+
   const filteredMessages = messages.filter((msg) =>
     msg.content.toLowerCase().includes(msgFilter.toLowerCase()),
   );
+
 
   if (loading) {
     return (
@@ -159,14 +177,23 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
     );
   }
 
+  const getChannelIconBadge = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('design') || lower.includes('ux')) return { icon: '🎨', bg: 'bg-pink-500/20 text-pink-300 border-pink-500/30 shadow-pink-500/10' };
+    if (lower.includes('ai') || lower.includes('machine') || lower.includes('ml')) return { icon: '🤖', bg: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30 shadow-indigo-500/10' };
+    if (lower.includes('gaming') || lower.includes('game')) return { icon: '🎮', bg: 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-amber-500/10' };
+    if (lower.includes('tech') || lower.includes('code') || lower.includes('dev')) return { icon: '💻', bg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30 shadow-cyan-500/10' };
+    return { icon: '💬', bg: 'bg-blue-500/20 text-blue-300 border-blue-500/30 shadow-blue-500/10' };
+  };
+
   // Active Member Live Chat Stream
   return (
     <div className="flex-1 flex flex-col h-full glass-main overflow-hidden">
       {/* Channel Header Navigation Bar */}
       <header className="px-6 py-3.5 border-b border-slate-800/80 bg-slate-950/70 flex justify-between items-center shrink-0 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center font-extrabold text-blue-400 text-lg">
-            #
+          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-extrabold text-base shadow-sm ${getChannelIconBadge(groupName).bg}`}>
+            {getChannelIconBadge(groupName).icon}
           </div>
           <div>
             <h2 className="font-extrabold text-white text-sm tracking-tight flex items-center gap-2">
@@ -270,6 +297,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
         ) : (
           filteredMessages.map((msg) => {
             const isMine = msg.senderId === currentUserId;
+            const isAiBot =
+              msg.sender?.username === 'Nexus AI Bot' ||
+              msg.content.includes('Daily AI Chat Summary');
             const displaySender = isMine
               ? currentUsername
               : msg.sender?.username || 'Member';
@@ -279,23 +309,35 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                 key={msg.id}
                 className={`flex gap-3 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
               >
-                {/* User Avatar */}
+                {/* User / Bot Avatar */}
                 <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black shrink-0 shadow-md ${
-                    isMine
-                      ? 'gradient-btn text-white'
-                      : 'bg-slate-800 text-slate-300 border border-slate-700'
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black shrink-0 border relative shadow-lg ${
+                    isAiBot
+                      ? 'bg-gradient-to-br from-indigo-600 via-purple-700 to-slate-900 border-indigo-400/50 text-indigo-200 shadow-indigo-500/30 ring-2 ring-indigo-500/20 animate-pulse'
+                      : getAvatarGradient(displaySender)
                   }`}
                 >
-                  {getInitials(displaySender)}
+                  {isAiBot ? '🤖' : getInitials(displaySender)}
+                  <span className="absolute -bottom-0.5 -right-0.5 text-[9px] drop-shadow-md">
+                    {isAiBot ? '⚡' : '👤'}
+                  </span>
                 </div>
 
-                <div className={`flex flex-col max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
+                <div
+                  className={`flex flex-col max-w-[85%] sm:max-w-[75%] ${
+                    isMine ? 'items-end' : 'items-start'
+                  }`}
+                >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-bold text-slate-400">
+                    <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
                       {displaySender}
+                      {isAiBot && (
+                        <span className="text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">
+                          AI Summary
+                        </span>
+                      )}
                     </span>
-                    <span className="text-[10px] text-slate-600">
+                    <span className="text-[10px] text-slate-500">
                       {new Date(msg.createdAt).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -304,8 +346,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                   </div>
 
                   <div
-                    className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-md break-words ${
-                      isMine
+                    className={`px-4 py-3 rounded-2xl text-xs leading-relaxed shadow-md break-words whitespace-pre-wrap ${
+                      isAiBot
+                        ? 'bg-slate-900/90 border border-indigo-500/30 text-slate-100 rounded-tl-none shadow-indigo-950/40 backdrop-blur-md'
+                        : isMine
                         ? 'gradient-btn text-white rounded-tr-none'
                         : 'bg-slate-900 text-slate-200 border border-slate-800 rounded-tl-none'
                     }`}
@@ -317,6 +361,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             );
           })
         )}
+
         <div ref={messagesEndRef} />
       </div>
 

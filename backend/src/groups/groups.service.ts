@@ -138,4 +138,38 @@ export class GroupsService {
       membership,
     };
   }
+
+  async leaveGroup(userId: string, groupId: string) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
+
+    if (!group) {
+      throw new NotFoundException(`Group with ID '${groupId}' not found`);
+    }
+
+    const membership = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new NotFoundException('You are not a member of this group');
+    }
+
+    await this.prisma.groupMember.delete({
+      where: {
+        id: membership.id,
+      },
+    });
+
+    return {
+      message: 'Successfully left group',
+    };
+  }
 }
+

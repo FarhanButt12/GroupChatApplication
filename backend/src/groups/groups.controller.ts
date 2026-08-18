@@ -41,4 +41,14 @@ export class GroupsController {
   ) {
     return this.groupsService.joinGroup(userId, id);
   }
+
+  @ApiOperation({ summary: 'Leave a group' })
+  @Post(':id/leave')
+  async leaveGroup(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.groupsService.leaveGroup(userId, id);
+  }
 }
+

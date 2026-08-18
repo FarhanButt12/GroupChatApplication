@@ -24,6 +24,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(ChatGateway.name);
 
+  // Tracks online users per group room: Map<groupId, Map<socketId, { userId: string, username: string }>>
+  private readonly roomOnlineUsers = new Map<
+    string,
+    Map<string, { userId: string; username: string }>
+  >();
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -57,6 +63,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
+
+    // Remove client from all room presence tracking
+    this.roomOnlineUsers.forEach((usersMap, groupId) => {
+      if (usersMap.has(client.id)) {
+        usersMap.delete(client.id);
+        this.broadcastOnlineUsers(groupId);
+      }
+    });
   }
 
   @SubscribeMessage('joinRoom')
@@ -67,6 +81,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (data?.groupId) {
       const roomName = `group:${data.groupId}`;
       client.join(roomName);
+
+      const user = client.data.user;
+      if (user) {
+        if (!this.roomOnlineUsers.has(data.groupId)) {
+          this.roomOnlineUsers.set(data.groupId, new Map());
+        }
+        const userMap = this.roomOnlineUsers.get(data.groupId)!;
+        userMap.set(client.id, {
+          userId: user.sub || user.id,
+          username: user.username,
+        });
+
+        this.broadcastOnlineUsers(data.groupId);
+      }
+
       this.logger.log(`Socket ${client.id} joined room ${roomName}`);
       return { status: 'joined', room: roomName };
     }
@@ -80,8 +109,47 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (data?.groupId) {
       const roomName = `group:${data.groupId}`;
       client.leave(roomName);
+
+      if (this.roomOnlineUsers.has(data.groupId)) {
+        const userMap = this.roomOnlineUsers.get(data.groupId)!;
+        userMap.delete(client.id);
+        this.broadcastOnlineUsers(data.groupId);
+      }
+
       this.logger.log(`Socket ${client.id} left room ${roomName}`);
       return { status: 'left', room: roomName };
+    }
+  }
+
+  @SubscribeMessage('typing:start')
+  handleTypingStart(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { groupId: string },
+  ) {
+    if (data?.groupId && client.data.user) {
+      const roomName = `group:${data.groupId}`;
+      client.to(roomName).emit('userTyping', {
+        groupId: data.groupId,
+        userId: client.data.user.sub || client.data.user.id,
+        username: client.data.user.username,
+        isTyping: true,
+      });
+    }
+  }
+
+  @SubscribeMessage('typing:stop')
+  handleTypingStop(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { groupId: string },
+  ) {
+    if (data?.groupId && client.data.user) {
+      const roomName = `group:${data.groupId}`;
+      client.to(roomName).emit('userTyping', {
+        groupId: data.groupId,
+        userId: client.data.user.sub || client.data.user.id,
+        username: client.data.user.username,
+        isTyping: false,
+      });
     }
   }
 
@@ -89,5 +157,35 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const roomName = `group:${groupId}`;
     this.server.to(roomName).emit('newMessage', message);
     this.logger.log(`Broadcasted new message to room ${roomName}`);
+  }
+
+  broadcastMessageUpdate(groupId: string, message: any) {
+    const roomName = `group:${groupId}`;
+    this.server.to(roomName).emit('messageUpdated', message);
+    this.logger.log(`Broadcasted message update to room ${roomName}`);
+  }
+
+  broadcastMessageDelete(groupId: string, messageId: string) {
+    const roomName = `group:${groupId}`;
+    this.server.to(roomName).emit('messageDeleted', { messageId, groupId });
+    this.logger.log(`Broadcasted message deletion to room ${roomName}`);
+  }
+
+  private broadcastOnlineUsers(groupId: string) {
+    const roomName = `group:${groupId}`;
+    const userMap = this.roomOnlineUsers.get(groupId);
+
+    const onlineUsersList = userMap
+      ? Array.from(
+          new Map(
+            Array.from(userMap.values()).map((u) => [u.userId, u]),
+          ).values(),
+        )
+      : [];
+
+    this.server.to(roomName).emit('onlineUsers', {
+      groupId,
+      users: onlineUsersList,
+    });
   }
 }

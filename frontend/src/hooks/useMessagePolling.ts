@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { API_BASE_URL } from '../config/constants';
 
 export interface Sender {
   id: string;
@@ -38,7 +39,7 @@ export function useMessagePolling({
   groupId,
   token,
   intervalMs = 10000,
-  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  apiUrl = API_BASE_URL,
 }: UseMessagePollingOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

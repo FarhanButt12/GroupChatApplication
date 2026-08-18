@@ -1,10 +1,25 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { API_BASE_URL } from '../config/constants';
 
 export interface Sender {
   id: string;
   username: string;
   email: string;
+}
+
+export interface Reaction {
+  id: string;
+  emoji: string;
+  userId: string;
+  user: Sender;
+}
+
+export interface ReadReceipt {
+  id: string;
+  userId: string;
+  readAt: string;
+  user: Sender;
 }
 
 export interface Message {
@@ -13,7 +28,20 @@ export interface Message {
   groupId: string;
   senderId: string;
   createdAt: string;
+  updatedAt?: string;
   sender: Sender;
+  fileUrl?: string | null;
+  fileType?: string | null;
+  fileName?: string | null;
+  isEdited?: boolean;
+  isDeleted?: boolean;
+  reactions?: Reaction[];
+  readReceipts?: ReadReceipt[];
+}
+
+export interface OnlineUser {
+  userId: string;
+  username: string;
 }
 
 export interface FetchMessagesResponse {
@@ -37,13 +65,15 @@ interface UseMessageSocketOptions {
 export function useMessageSocket({
   groupId,
   token,
-  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  apiUrl = API_BASE_URL,
 }: UseMessageSocketOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isMember, setIsMember] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [typingUsers, setTypingUsers] = useState<OnlineUser[]>([]);
 
   const socketRef = useRef<Socket | null>(null);
   const isMountedRef = useRef<boolean>(true);
@@ -106,17 +136,15 @@ export function useMessageSocket({
     [groupId, token, apiUrl],
   );
 
-  // 2. Real-time Socket.IO connection and group room listener
+  // 2. Real-time Socket.IO connection and listeners
   useEffect(() => {
     isMountedRef.current = true;
     setIsMember(true);
 
-    // Load initial chat history
     fetchMessages(true);
 
     if (!groupId || !token) return;
 
-    // Connect to Socket.IO backend
     const socket = io(apiUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
@@ -138,15 +166,60 @@ export function useMessageSocket({
       }
     });
 
-    // Listen for live broadcast messages
     socket.on('newMessage', (newMsg: Message) => {
       if (isMountedRef.current && newMsg.groupId === groupId) {
         setMessages((prev) => {
-          // Avoid duplicate messages
           if (prev.some((m) => m.id === newMsg.id)) {
-            return prev;
+            return prev.map((m) => (m.id === newMsg.id ? newMsg : m));
           }
           return [...prev, newMsg];
+        });
+      }
+    });
+
+    socket.on('messageUpdated', (updatedMsg: Message) => {
+      if (isMountedRef.current && updatedMsg.groupId === groupId) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === updatedMsg.id ? updatedMsg : m)),
+        );
+      }
+    });
+
+    socket.on('messageDeleted', ({ messageId, groupId: msgGroupId }: { messageId: string; groupId: string }) => {
+      if (isMountedRef.current && msgGroupId === groupId) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  content: 'This message was deleted',
+                  isDeleted: true,
+                  fileUrl: null,
+                  fileName: null,
+                }
+              : m,
+          ),
+        );
+      }
+    });
+
+    socket.on('onlineUsers', (data: { groupId: string; users: OnlineUser[] }) => {
+      if (isMountedRef.current && data.groupId === groupId) {
+        setOnlineUsers(data.users || []);
+      }
+    });
+
+    socket.on('userTyping', (data: { groupId: string; userId: string; username: string; isTyping: boolean }) => {
+      if (isMountedRef.current && data.groupId === groupId) {
+        setTypingUsers((prev) => {
+          if (data.isTyping) {
+            if (!prev.some((u) => u.userId === data.userId)) {
+              return [...prev, { userId: data.userId, username: data.username }];
+            }
+            return prev;
+          } else {
+            return prev.filter((u) => u.userId !== data.userId);
+          }
         });
       }
     });
@@ -160,7 +233,18 @@ export function useMessageSocket({
     };
   }, [groupId, token, apiUrl, fetchMessages]);
 
-  // Join channel API action for non-members
+  const emitTypingStart = useCallback(() => {
+    if (socketRef.current?.connected && groupId) {
+      socketRef.current.emit('typing:start', { groupId });
+    }
+  }, [groupId]);
+
+  const emitTypingStop = useCallback(() => {
+    if (socketRef.current?.connected && groupId) {
+      socketRef.current.emit('typing:stop', { groupId });
+    }
+  }, [groupId]);
+
   const joinGroup = useCallback(async () => {
     if (!groupId || !token) return;
     setLoading(true);
@@ -207,6 +291,10 @@ export function useMessageSocket({
     isMember,
     error,
     isConnected,
+    onlineUsers,
+    typingUsers,
+    emitTypingStart,
+    emitTypingStop,
     joinGroup,
     refetch,
   };

@@ -1,16 +1,23 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  // Create Nest application
-  const app = await NestFactory.create(AppModule);
+  // Create Nest application with Express platform
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Enable CORS
   app.enableCors({
     origin: true,
     credentials: true,
+  });
+
+  // Serve static uploaded files
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
   });
 
   // Global Validation
@@ -26,7 +33,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Group Chat REST API')
     .setDescription(
-      'Production-ready Phase 1 Group Chat Application REST API Documentation',
+      'Production-ready Phase 1-6 Group Chat Application REST API Documentation',
     )
     .setVersion('1.0')
     .addBearerAuth(

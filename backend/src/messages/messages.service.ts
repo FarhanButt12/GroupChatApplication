@@ -5,12 +5,16 @@ import {
 } from '@nestjs/common';
 import { USER_SELECT } from '../common/constants/user-select.constant';
 import { PrismaService } from '../prisma/prisma.service';
+import { ChatGateway } from './chat.gateway';
 import { GetMessagesQueryDto } from './dto/get-messages-query.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 
 @Injectable()
 export class MessagesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private chatGateway: ChatGateway,
+  ) {}
 
   // Helper method to verify group membership authorization
   private async checkMembership(userId: string, groupId: string) {
@@ -57,6 +61,9 @@ export class MessagesService {
         },
       },
     });
+
+    // 3. Real-time emit to all connected WebSocket clients in the group room
+    this.chatGateway.broadcastMessage(groupId, message);
 
     return {
       message: 'Message sent successfully',
